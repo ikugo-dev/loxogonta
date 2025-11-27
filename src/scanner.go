@@ -1,5 +1,9 @@
 package main
 
+import (
+	"strconv"
+)
+
 type Scanner struct {
 	source  string
 	tokens  []Token
@@ -49,10 +53,11 @@ func (s *Scanner) scanToken() {
 		s.matchAddToken('=', TokenType_LessEqual, TokenType_Less)
 	case '>':
 		s.matchAddToken('=', TokenType_GreaterEqual, TokenType_Greater)
+	case '"':
+		s.scanString()
 	case '/':
 		if s.match('/') { // A comment goes until the end of the line.
-			// for (peek() != '\n' && !isAtEnd()) {
-			for s.peek() != '\n' {
+			for s.peek() != '\n' && !s.isAtEnd() {
 				s.advance()
 			}
 		} else {
@@ -64,7 +69,11 @@ func (s *Scanner) scanToken() {
 	case '\n':
 		s.line++
 	default:
-		error(s.line, "Unexpected character.")
+		if isDigit(c) {
+			s.scanNumber()
+		} else {
+			error(s.line, "Unexpected character.")
+		}
 	}
 }
 func (s *Scanner) addToken(tokenType TokenType) {
@@ -102,11 +111,60 @@ func (s *Scanner) advance() rune {
 
 func (s *Scanner) peek() rune {
 	if s.isAtEnd() {
-		return '\n'
+		return ' '
 	}
 	return rune(s.source[s.current])
 }
 
+func (s *Scanner) peekNext() rune {
+	s.current++
+	value := s.peek()
+	s.current--
+	return value
+}
+
 func (s *Scanner) isAtEnd() bool {
 	return s.current >= len(s.source)
+}
+
+func isDigit(c rune) bool {
+	return c >= '0' && c <= '9'
+}
+
+func (s *Scanner) scanNumber() {
+	for isDigit(s.peek()) && !s.isAtEnd() {
+		s.advance()
+	}
+	if s.peek() == '.' && isDigit(s.peekNext()) { // Look for a fractional part.
+		s.advance() // Consume the "."
+		for isDigit(s.peek()) {
+			s.advance()
+		}
+	}
+	for isDigit(s.peek()) {
+		s.advance()
+	}
+	value, err := strconv.ParseFloat(s.source[s.start:s.current], 64)
+	if err != nil {
+		error(s.line, "Invalid number.")
+		return
+	}
+	s.addTokenWithLiteral(TokenType_Number, value)
+}
+
+func (s *Scanner) scanString() {
+	for s.peek() != '"' && !s.isAtEnd() {
+		if s.peek() == '\n' { // Multi-line string support
+			s.line++
+		}
+		s.advance()
+	}
+	if s.isAtEnd() {
+		error(s.line, "Unterminated string.")
+		return
+	}
+	// The closing ".
+	s.advance()
+	value := s.source[s.start+1 : s.current-1]
+	s.addTokenWithLiteral(TokenType_String, value)
 }
