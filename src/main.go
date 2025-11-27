@@ -16,6 +16,8 @@ func main() {
 	}
 }
 
+var hadError = false
+
 func runFile(filePath string) {
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
@@ -42,14 +44,13 @@ func runPrompt() {
 	}
 }
 
-var hadError = false
+func run(source string) {
+	fmt.Println(source)
 
-func run(code string) {
-	fmt.Println(code)
-
-	var tokens []Token = scanTokens(code)
+	var scanner Scanner = Scanner{source: source, line: 1}
+	var tokens []Token = scanner.scanTokens()
 	// For now, just print the tokens.
 	for _, token := range tokens {
-		fmt.Println(token)
+		fmt.Println("Token:", token)
 	}
 }
