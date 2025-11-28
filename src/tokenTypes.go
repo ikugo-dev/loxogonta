@@ -3,7 +3,8 @@ package main
 type TokenType int
 
 const (
-	TokenType_LeftParen TokenType = iota // Single-character tokens.
+	TokenType_InvalidToken TokenType = iota // Single-character tokens.
+	TokenType_LeftParen
 	TokenType_RightParen
 	TokenType_LeftBrace
 	TokenType_RightBrace

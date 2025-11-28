@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -32,10 +33,11 @@ func runFile(filePath string) {
 }
 
 func runPrompt() {
+	in := bufio.NewReader(os.Stdin)
 	for true {
 		fmt.Print("> ")
 		var line string
-		_, err := fmt.Scanln(&line)
+		line, err := in.ReadString('\n')
 		if err != nil {
 			break
 		}
@@ -45,8 +47,6 @@ func runPrompt() {
 }
 
 func run(source string) {
-	fmt.Println(source)
-
 	var scanner Scanner = Scanner{source: source, line: 1}
 	var tokens []Token = scanner.scanTokens()
 	// For now, just print the tokens.
