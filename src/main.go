@@ -51,6 +51,6 @@ func run(source string) {
 	var tokens []scanner.Token = s.ScanTokens()
 	// For now, just print the tokens.
 	for _, token := range tokens {
-		fmt.Println("Token:", token)
+		fmt.Println("Token:", token.ToString())
 	}
 }

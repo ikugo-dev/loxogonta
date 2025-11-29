@@ -47,7 +47,8 @@ const (
 
 func (t TokenType) toString() string {
 	return []string{
-		"TokenType_LeftParen", // Single-character tokens.
+		"TokenType_InvalidToken", // Single-character tokens.
+		"TokenType_LeftParen",
 		"TokenType_RightParen",
 		"TokenType_LeftBrace",
 		"TokenType_RightBrace",

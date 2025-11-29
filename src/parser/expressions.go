@@ -2,6 +2,7 @@ package parser
 
 import "github.com/ikugo-dev/loxogonta/src/scanner"
 
+// OLD:
 // expression     → literal
 //                | unary
 //                | binary
@@ -12,6 +13,17 @@ import "github.com/ikugo-dev/loxogonta/src/scanner"
 // binary         → expression operator expression ;
 // operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
 //                | "+"  | "-"  | "*" | "/" ;
+
+// NEW:
+// expression     → equality ;
+// equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+// comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+// term           → factor ( ( "-" | "+" ) factor )* ;
+// factor         → unary ( ( "/" | "*" ) unary )* ;
+// unary          → ( "!" | "-" ) unary
+//                | primary ;
+// primary        → NUMBER | STRING | "true" | "false" | "nil"
+//                | "(" expression ")" ;
 
 type Expression interface {
 	foo()
