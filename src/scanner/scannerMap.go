@@ -1,4 +1,6 @@
-package main
+package scanner
+
+import "github.com/ikugo-dev/loxogonta/src/errors"
 
 func (s *Scanner) scanToken() {
 	var c rune = s.advance()
@@ -45,14 +47,14 @@ func (s *Scanner) scanToken() {
 	case '\r':
 	case '\t':
 	case '\n':
-		s.line++
+		s.Line++
 	default:
 		if isDigit(c) {
 			s.scanNumber()
 		} else if isAlpha(c) {
 			s.identifier()
 		} else {
-			error(s.line, "Unexpected character.")
+			errors.Report(s.Line, "", "Unexpected character.")
 		}
 	}
 }

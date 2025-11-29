@@ -1,4 +1,4 @@
-package main
+package scanner
 
 import "fmt"
 
@@ -9,6 +9,6 @@ type Token struct {
 	line      int
 }
 
-func (t Token) toString() string {
+func (t Token) ToString() string {
 	return fmt.Sprintf("%s %s %v", t.tokenType.toString(), t.lexeme, t.literal)
 }

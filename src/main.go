@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/ikugo-dev/loxogonta/src/errors"
+	"github.com/ikugo-dev/loxogonta/src/scanner"
 	"os"
 )
 
@@ -17,8 +19,6 @@ func main() {
 	}
 }
 
-var hadError = false
-
 func runFile(filePath string) {
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
@@ -27,7 +27,7 @@ func runFile(filePath string) {
 	}
 	run(string(fileContent))
 
-	if hadError {
+	if errors.HadError {
 		os.Exit(65)
 	}
 }
@@ -42,13 +42,13 @@ func runPrompt() {
 			break
 		}
 		run(line)
-		hadError = false
+		errors.HadError = false
 	}
 }
 
 func run(source string) {
-	var scanner Scanner = Scanner{source: source, line: 1}
-	var tokens []Token = scanner.scanTokens()
+	var s scanner.Scanner = scanner.Scanner{Source: source, Line: 1}
+	var tokens []scanner.Token = s.ScanTokens()
 	// For now, just print the tokens.
 	for _, token := range tokens {
 		fmt.Println("Token:", token)
