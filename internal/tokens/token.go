@@ -1,4 +1,11 @@
-package scanner
+package tok
+
+type Token struct {
+	TokenType TokenType
+	Lexeme    string
+	Literal   any
+	Line      int
+}
 
 type TokenType int
 
@@ -45,7 +52,7 @@ const (
 	TokenType_Eof
 )
 
-func (t TokenType) toString() string {
+func (t Token) ToString() string {
 	return []string{
 		"TokenType_InvalidToken", // Single-character tokens.
 		"TokenType_LeftParen",
@@ -87,5 +94,5 @@ func (t TokenType) toString() string {
 		"TokenType_Var",
 		"TokenType_While",
 		"TokenType_Eof",
-	}[t]
+	}[t.TokenType]
 }

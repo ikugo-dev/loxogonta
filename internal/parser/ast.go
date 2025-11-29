@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/ikugo-dev/loxogonta/src/scanner"
+import tok "github.com/ikugo-dev/loxogonta/internal/tokens"
 
 // OLD:
 // expression     → literal
@@ -37,12 +37,12 @@ type Grouping struct {
 	Expression Expression
 }
 type Unary struct {
-	Operator scanner.Token
+	Operator tok.Token
 	Right    Expression
 }
 type Binary struct {
 	Left     Expression
-	Operator scanner.Token
+	Operator tok.Token
 	Right    Expression
 }
 

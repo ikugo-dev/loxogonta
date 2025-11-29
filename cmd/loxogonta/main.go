@@ -3,9 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/ikugo-dev/loxogonta/src/errors"
-	"github.com/ikugo-dev/loxogonta/src/scanner"
 	"os"
+
+	"github.com/ikugo-dev/loxogonta/internal/errors"
+	"github.com/ikugo-dev/loxogonta/internal/scanner"
 )
 
 func main() {
@@ -47,10 +48,9 @@ func runPrompt() {
 }
 
 func run(source string) {
-	var s scanner.Scanner = scanner.Scanner{Source: source, Line: 1}
-	var tokens []scanner.Token = s.ScanTokens()
-	// For now, just print the tokens.
-	for _, token := range tokens {
-		fmt.Println("Token:", token.ToString())
+	scanner := scn.NewScanner(source)
+	tokens := scanner.ScanTokens()
+	for _, token := range tokens { // For now, just print the tokens.
+		fmt.Println("Token: ", token.ToString())
 	}
 }
