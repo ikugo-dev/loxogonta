@@ -51,8 +51,8 @@ func runPrompt() {
 func run(source string) {
 	scanner := scn.NewScanner(source)
 	tokens := scanner.ScanTokens()
-	// for _, token := range tokens { // For now, just print the tokens.
-	// 	fmt.Println("Token: ", token.ToString())
+	// for _, token := range tokens {
+	// 	fmt.Println("Token: ", token.ToString(), token.Lexeme)
 	// }
 	parser := prs.NewParser(tokens)
 	expression := parser.Parse()

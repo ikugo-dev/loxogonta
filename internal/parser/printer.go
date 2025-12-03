@@ -11,7 +11,7 @@ func ToString(e expression) string {
 		return "(" + ToString(expr.expression) + ")"
 	case *unary:
 		return "(" +
-			expr.operator.ToString() + " " +
+			expr.operator.Lexeme + " " +
 			ToString(expr.right) +
 			")"
 	case *binary:
