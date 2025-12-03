@@ -1,18 +1,30 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+
+	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+)
 
 var HadError = false
 
-func Report(line int, where, message string) {
-	fmt.Printf("[line %d] Error %s + %s", line, where, message)
+func Report(line int, where, message string) string {
 	HadError = true
+	err := fmt.Sprintf("[line %d] Error %s + %s", line, where, message)
+	fmt.Println(err)
+	return err
 }
 
-func ReportToken(token , String message) {
-    if (token.type == TokenType.EOF) {
-      report(token.line, " at end", message);
-    } else {
-      report(token.line, " at '" + token.lexeme + "'", message);
-    }
-  }
+type ParseError struct {
+	message string
+}
+
+func ReportToken(token tok.Token, message string) {
+	var where string
+	if token.TokenType == tok.TokenType_Eof {
+		where = "at end"
+	} else {
+		where = "at '" + token.Lexeme + "'"
+	}
+	panic(ParseError{Report(token.Line, where, message)})
+}

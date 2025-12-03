@@ -1,24 +1,24 @@
-package parser
+package prs
 
 import "fmt"
 
-func Print(e Expression) string {
+func ToString(e expression) string {
 	switch expr := e.(type) {
 
-	case *Literal:
-		return fmt.Sprintf("%v", expr.Value)
-	case *Grouping:
-		return "(" + Print(expr.Expression) + ")"
-	case *Unary:
+	case *literal:
+		return fmt.Sprintf("%v", expr.value)
+	case *grouping:
+		return "(" + ToString(expr.expression) + ")"
+	case *unary:
 		return "(" +
-			expr.Operator.ToString() + " " +
-			Print(expr.Right) +
+			expr.operator.ToString() + " " +
+			ToString(expr.right) +
 			")"
-	case *Binary:
+	case *binary:
 		return "(" +
-			expr.Operator.ToString() + " " +
-			Print(expr.Left) + " " +
-			Print(expr.Right) +
+			expr.operator.Lexeme + " " +
+			ToString(expr.left) + " " +
+			ToString(expr.right) +
 			")"
 
 	default:
