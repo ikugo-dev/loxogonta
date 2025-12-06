@@ -61,7 +61,7 @@ func run(source string) {
 		return
 	}
 	for _, statement := range statements {
-		statement.Foo()
+		fmt.Printf("statement: %v\n", statement)
 	}
 	intr.Interpret(statements)
 }

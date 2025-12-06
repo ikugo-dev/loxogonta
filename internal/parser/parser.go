@@ -18,11 +18,10 @@ func NewParser(tokens []tok.Token) parser {
 }
 
 func (p *parser) Parse() []ast.Statement {
-	// return p.declaration()
-	return p.program()
+	return p.declaration()
 }
 
-func (p *parser) declaration() ast.Expression {
+func (p *parser) declaration() []ast.Statement {
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -34,7 +33,7 @@ func (p *parser) declaration() ast.Expression {
 			}
 		}
 	}()
-	return p.expression()
+	return p.program()
 }
 
 func (p *parser) match(tokenTypes ...tok.TokenType) bool {

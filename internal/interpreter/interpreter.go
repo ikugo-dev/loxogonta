@@ -98,7 +98,7 @@ func eval(e ast.Expression) any {
 				return nil
 			}
 			return left.(float64) <= right.(float64)
-		case tok.TokenType_Equal:
+		case tok.TokenType_EqualEqual:
 			return isEqual(left, right)
 		case tok.TokenType_BangEqual:
 			return !isEqual(left, right)

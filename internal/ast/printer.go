@@ -1,24 +1,20 @@
-package prs
+package ast
 
-import (
-	"fmt"
+import "fmt"
 
-	"github.com/ikugo-dev/loxogonta/internal/ast"
-)
-
-func ToString(e ast.Expression) string {
+func ToString(e Expression) string {
 	switch expr := e.(type) {
 
-	case *ast.Literal:
+	case *Literal:
 		return fmt.Sprintf("%v", expr.Value)
-	case *ast.Grouping:
+	case *Grouping:
 		return "(" + ToString(expr.Expression) + ")"
-	case *ast.Unary:
+	case *Unary:
 		return "(" +
 			expr.Operator.Lexeme + " " +
 			ToString(expr.Right) +
 			")"
-	case *ast.Binary:
+	case *Binary:
 		return "(" +
 			expr.Operator.Lexeme + " " +
 			ToString(expr.Left) + " " +
@@ -26,6 +22,6 @@ func ToString(e ast.Expression) string {
 			")"
 
 	default:
-		panic("unexpected expr")
+		panic("Unexpected expression")
 	}
 }
