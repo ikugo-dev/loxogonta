@@ -24,7 +24,7 @@ func (p *parser) declaration() Expression {
 	defer func() {
 		err := recover()
 		if err != nil {
-			if _, ok := err.(errors.ParseError); ok {
+			if errors.HadParseError {
 				// this is for later
 				// p.synchronize()
 			} else {

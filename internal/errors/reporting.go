@@ -7,24 +7,31 @@ import (
 )
 
 var HadError = false
+var HadRuntimeError = false
+var HadParseError = false
 
-func Report(line int, where, message string) string {
-	HadError = true
-	err := fmt.Sprintf("[line %d] Error %s + %s", line, where, message)
-	fmt.Println(err)
-	return err
+func formatError(line int, where, message string) string {
+	return fmt.Sprintf("[line %d] Error at %s: %s", line, where, message)
 }
 
-type ParseError struct {
-	message string
+func Report(line int, where, message string) {
+	HadError = true
+	fmt.Println(formatError(line, where, message))
+}
+
+func ReportRuntime(line int, where, message string) {
+	HadRuntimeError = true
+	fmt.Println(formatError(line, where, message))
 }
 
 func ReportToken(token tok.Token, message string) {
+	HadParseError = true
 	var where string
 	if token.TokenType == tok.TokenType_Eof {
 		where = "at end"
 	} else {
 		where = "at '" + token.Lexeme + "'"
 	}
-	panic(ParseError{Report(token.Line, where, message)})
+	Report(token.Line, where, message)
+	panic(formatError(token.Line, where, message))
 }

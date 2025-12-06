@@ -30,8 +30,11 @@ func runFile(filePath string) {
 	}
 	run(string(fileContent))
 
-	if errors.HadError {
+	if errors.HadError || errors.HadParseError {
 		os.Exit(65)
+	}
+	if errors.HadRuntimeError {
+		os.Exit(70)
 	}
 }
 
