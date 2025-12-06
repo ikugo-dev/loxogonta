@@ -1,19 +1,36 @@
 package intr
 
 import (
+	"fmt"
+
+	"github.com/ikugo-dev/loxogonta/internal/ast"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
-	prs "github.com/ikugo-dev/loxogonta/internal/parser"
 	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
-func Interpret(e prs.Expression) any {
+func Interpret(statements []ast.Statement) {
+	for _, statement := range statements {
+		evalStatement(statement)
+	}
+}
+
+func evalStatement(statement ast.Statement) {
+	switch s := statement.(type) {
+	case *ast.PrintStmt:
+		fmt.Println(" --> ", eval(s.Expr))
+	case *ast.ExpressionStmt:
+		eval(s.Expr)
+	}
+}
+
+func eval(e ast.Expression) any {
 	switch expr := e.(type) {
-	case *prs.Literal:
+	case *ast.Literal:
 		return expr.Value
-	case *prs.Grouping:
-		Interpret(expr.Expression)
-	case *prs.Unary:
-		right := Interpret(expr.Right)
+	case *ast.Grouping:
+		return eval(expr.Expression)
+	case *ast.Unary:
+		right := eval(expr.Right)
 		switch expr.Operator.TokenType {
 		case tok.TokenType_Minus:
 			if !areNumbers(right) {
@@ -24,9 +41,9 @@ func Interpret(e prs.Expression) any {
 		case tok.TokenType_Bang:
 			return !isTruthy(right)
 		}
-	case *prs.Binary:
-		left := Interpret(expr.Left)
-		right := Interpret(expr.Right)
+	case *ast.Binary:
+		left := eval(expr.Left)
+		right := eval(expr.Right)
 		switch expr.Operator.TokenType {
 		case tok.TokenType_Plus:
 			if !areNumbers(left, right) && !areStrings(left, right) {

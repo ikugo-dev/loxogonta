@@ -3,6 +3,7 @@ package prs
 import (
 	"slices"
 
+	"github.com/ikugo-dev/loxogonta/internal/ast"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
 	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
@@ -16,11 +17,12 @@ func NewParser(tokens []tok.Token) parser {
 	return parser{tokens, 0}
 }
 
-func (p *parser) Parse() Expression {
-	return p.declaration()
+func (p *parser) Parse() []ast.Statement {
+	// return p.declaration()
+	return p.program()
 }
 
-func (p *parser) declaration() Expression {
+func (p *parser) declaration() ast.Expression {
 	defer func() {
 		err := recover()
 		if err != nil {

@@ -1,20 +1,9 @@
-package prs
+package ast
 
-import tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+import (
+	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+)
 
-// OLD:
-// expression     → literal
-//                | unary
-//                | binary
-//                | grouping ;
-// literal        → NUMBER | STRING | "true" | "false" | "nil" ;
-// grouping       → "(" expression ")" ;
-// unary          → ( "-" | "!" ) expression ;
-// binary         → expression operator expression ;
-// operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
-//                | "+"  | "-"  | "*" | "/" ;
-
-// NEW:
 // expression     → equality ;
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
@@ -32,7 +21,6 @@ type Expression interface {
 type Literal struct {
 	Value any
 }
-
 type Grouping struct {
 	Expression Expression
 }

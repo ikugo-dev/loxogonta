@@ -1,20 +1,24 @@
 package prs
 
-import "fmt"
+import (
+	"fmt"
 
-func ToString(e Expression) string {
+	"github.com/ikugo-dev/loxogonta/internal/ast"
+)
+
+func ToString(e ast.Expression) string {
 	switch expr := e.(type) {
 
-	case *Literal:
+	case *ast.Literal:
 		return fmt.Sprintf("%v", expr.Value)
-	case *Grouping:
+	case *ast.Grouping:
 		return "(" + ToString(expr.Expression) + ")"
-	case *Unary:
+	case *ast.Unary:
 		return "(" +
 			expr.Operator.Lexeme + " " +
 			ToString(expr.Right) +
 			")"
-	case *Binary:
+	case *ast.Binary:
 		return "(" +
 			expr.Operator.Lexeme + " " +
 			ToString(expr.Left) + " " +

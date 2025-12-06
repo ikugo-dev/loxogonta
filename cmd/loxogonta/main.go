@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/ikugo-dev/loxogonta/internal/errors"
-	intr "github.com/ikugo-dev/loxogonta/internal/interperer"
+	intr "github.com/ikugo-dev/loxogonta/internal/interpreter"
 	"github.com/ikugo-dev/loxogonta/internal/parser"
 	"github.com/ikugo-dev/loxogonta/internal/scanner"
 )
@@ -55,14 +55,13 @@ func runPrompt() {
 func run(source string) {
 	scanner := scn.NewScanner(source)
 	tokens := scanner.ScanTokens()
-	// for _, token := range tokens {
-	// 	fmt.Println("Token: ", token.ToString(), token.Lexeme)
-	// }
 	parser := prs.NewParser(tokens)
-	expression := parser.Parse()
+	statements := parser.Parse()
 	if errors.HadError {
 		return
 	}
-	fmt.Println(prs.ToString(expression))
-	fmt.Println(intr.Interpret(expression))
+	for _, statement := range statements {
+		statement.Foo()
+	}
+	intr.Interpret(statements)
 }
