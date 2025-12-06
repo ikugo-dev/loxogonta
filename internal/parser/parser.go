@@ -16,11 +16,11 @@ func NewParser(tokens []tok.Token) parser {
 	return parser{tokens, 0}
 }
 
-func (p *parser) Parse() expression {
+func (p *parser) Parse() Expression {
 	return p.declaration()
 }
 
-func (p *parser) declaration() expression {
+func (p *parser) declaration() Expression {
 	defer func() {
 		err := recover()
 		if err != nil {

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ikugo-dev/loxogonta/internal/errors"
+	intr "github.com/ikugo-dev/loxogonta/internal/interperer"
 	"github.com/ikugo-dev/loxogonta/internal/parser"
 	"github.com/ikugo-dev/loxogonta/internal/scanner"
 )
@@ -60,4 +61,5 @@ func run(source string) {
 		return
 	}
 	fmt.Println(prs.ToString(expression))
+	fmt.Println(intr.Interpret(expression))
 }

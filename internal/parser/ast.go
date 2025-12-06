@@ -25,28 +25,28 @@ import tok "github.com/ikugo-dev/loxogonta/internal/tokens"
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
 //                | "(" expression ")" ;
 
-type expression interface {
+type Expression interface {
 	foo()
 }
 
-type literal struct {
-	value any
+type Literal struct {
+	Value any
 }
 
-type grouping struct {
-	expression expression
+type Grouping struct {
+	Expression Expression
 }
-type unary struct {
-	operator tok.Token
-	right    expression
+type Unary struct {
+	Operator tok.Token
+	Right    Expression
 }
-type binary struct {
-	left     expression
-	operator tok.Token
-	right    expression
+type Binary struct {
+	Left     Expression
+	Operator tok.Token
+	Right    Expression
 }
 
-func (e *literal) foo()  {}
-func (e *grouping) foo() {}
-func (e *unary) foo()    {}
-func (e *binary) foo()   {}
+func (e *Literal) foo()  {}
+func (e *Grouping) foo() {}
+func (e *Unary) foo()    {}
+func (e *Binary) foo()   {}

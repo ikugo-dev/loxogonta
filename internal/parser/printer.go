@@ -2,23 +2,23 @@ package prs
 
 import "fmt"
 
-func ToString(e expression) string {
+func ToString(e Expression) string {
 	switch expr := e.(type) {
 
-	case *literal:
-		return fmt.Sprintf("%v", expr.value)
-	case *grouping:
-		return "(" + ToString(expr.expression) + ")"
-	case *unary:
+	case *Literal:
+		return fmt.Sprintf("%v", expr.Value)
+	case *Grouping:
+		return "(" + ToString(expr.Expression) + ")"
+	case *Unary:
 		return "(" +
-			expr.operator.Lexeme + " " +
-			ToString(expr.right) +
+			expr.Operator.Lexeme + " " +
+			ToString(expr.Right) +
 			")"
-	case *binary:
+	case *Binary:
 		return "(" +
-			expr.operator.Lexeme + " " +
-			ToString(expr.left) + " " +
-			ToString(expr.right) +
+			expr.Operator.Lexeme + " " +
+			ToString(expr.Left) + " " +
+			ToString(expr.Right) +
 			")"
 
 	default:

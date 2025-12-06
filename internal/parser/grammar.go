@@ -15,20 +15,20 @@ import (
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
 //                | "(" expression ")" ;
 
-func (p *parser) expression() expression {
+func (p *parser) expression() Expression {
 	return p.equality()
 }
 
-func (p *parser) equality() expression {
+func (p *parser) equality() Expression {
 	lExpr := p.comparison()
 	for p.match(tok.TokenType_BangEqual, tok.TokenType_EqualEqual) {
 		operator := p.previous()
 		rExpr := p.comparison()
-		lExpr = &binary{lExpr, operator, rExpr}
+		lExpr = &Binary{lExpr, operator, rExpr}
 	}
 	return lExpr
 }
-func (p *parser) comparison() expression {
+func (p *parser) comparison() Expression {
 	lExpr := p.term()
 	for p.match(tok.TokenType_Greater,
 		tok.TokenType_GreaterEqual,
@@ -37,37 +37,37 @@ func (p *parser) comparison() expression {
 
 		operator := p.previous()
 		rExpr := p.term()
-		lExpr = &binary{lExpr, operator, rExpr}
+		lExpr = &Binary{lExpr, operator, rExpr}
 	}
 	return lExpr
 }
-func (p *parser) term() expression {
+func (p *parser) term() Expression {
 	lExpr := p.factor()
 	for p.match(tok.TokenType_Plus, tok.TokenType_Minus) {
 		operator := p.previous()
 		rExpr := p.factor()
-		lExpr = &binary{lExpr, operator, rExpr}
+		lExpr = &Binary{lExpr, operator, rExpr}
 	}
 	return lExpr
 }
-func (p *parser) factor() expression {
+func (p *parser) factor() Expression {
 	lExpr := p.unary()
 	for p.match(tok.TokenType_Slash, tok.TokenType_Star) {
 		operator := p.previous()
 		rExpr := p.unary()
-		lExpr = &binary{lExpr, operator, rExpr}
+		lExpr = &Binary{lExpr, operator, rExpr}
 	}
 	return lExpr
 }
-func (p *parser) unary() expression {
+func (p *parser) unary() Expression {
 	if p.match(tok.TokenType_Bang, tok.TokenType_Minus) {
 		operator := p.previous()
 		rExpr := p.unary()
-		return &unary{operator, rExpr}
+		return &Unary{operator, rExpr}
 	}
 	return p.primary()
 }
-func (p *parser) primary() expression {
+func (p *parser) primary() Expression {
 	literalTokenTypes := []tok.TokenType{
 		tok.TokenType_Number,
 		tok.TokenType_String,
@@ -77,13 +77,13 @@ func (p *parser) primary() expression {
 	}
 	for _, tokenType := range literalTokenTypes {
 		if p.match(tokenType) {
-			return &literal{p.previous().Literal}
+			return &Literal{p.previous().Literal}
 		}
 	}
 	if p.match(tok.TokenType_LeftParen) {
 		expr := p.expression()
 		p.consume(tok.TokenType_RightParen, "Expect ')' after expression.")
-		return &grouping{expr}
+		return &Grouping{expr}
 	}
 	errors.ReportToken(p.peek(), "Expect expression.")
 	return nil
