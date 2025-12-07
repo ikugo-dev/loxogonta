@@ -8,83 +8,68 @@ import (
 	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
-type parser struct {
-	tokens  []tok.Token
-	current int
+var tokens []tok.Token
+var current int
+
+func resetData(newTokens []tok.Token) {
+	tokens = newTokens
+	current = 0
 }
 
-func NewParser(tokens []tok.Token) parser {
-	return parser{tokens, 0}
+func ParseTokens(tokens []tok.Token) []ast.Statement {
+	resetData(tokens)
+	return program()
 }
 
-func (p *parser) Parse() []ast.Statement {
-	return p.declaration()
-}
-
-func (p *parser) declaration() []ast.Statement {
-	defer func() {
-		err := recover()
-		if err != nil {
-			if errors.HadParseError {
-				// this is for later
-				// p.synchronize()
-			} else {
-				panic(err)
-			}
-		}
-	}()
-	return p.program()
-}
-
-func (p *parser) match(tokenTypes ...tok.TokenType) bool {
-	if slices.ContainsFunc(tokenTypes, p.check) {
-		p.advance()
+func match(tokenTypes ...tok.TokenType) bool {
+	if slices.ContainsFunc(tokenTypes, check) {
+		advance()
 		return true
 	}
 	return false
 }
 
-func (p *parser) check(tokenType tok.TokenType) bool {
-	if p.isAtEnd() {
+func check(tokenType tok.TokenType) bool {
+	if isAtEnd() {
 		return false
 	}
-	return p.peek().TokenType == tokenType
+	return peek().TokenType == tokenType
 }
 
-func (p *parser) advance() tok.Token {
-	if !p.isAtEnd() {
-		p.current++
+func advance() tok.Token {
+	if !isAtEnd() {
+		current++
 	}
-	return p.previous()
+	return previous()
 }
 
-func (p *parser) isAtEnd() bool {
-	return p.peek().TokenType == tok.TokenType_Eof
+func isAtEnd() bool {
+	return peek().TokenType == tok.TokenType_Eof
 }
 
-func (p *parser) peek() tok.Token {
-	return p.tokens[p.current]
+func peek() tok.Token {
+	return tokens[current]
 }
 
-func (p *parser) previous() tok.Token {
-	return p.tokens[p.current-1]
+func previous() tok.Token {
+	return tokens[current-1]
 }
 
-func (p *parser) consume(tokenType tok.TokenType, message string) tok.Token { // is return needed?
-	if p.check(tokenType) {
-		return p.advance()
+func consume(tokenType tok.TokenType, message string) tok.Token { // is return needed?
+	if check(tokenType) {
+		return advance()
 	}
-	errors.ReportToken(p.peek(), message)
+	errors.ReportToken(peek(), message)
 	return tok.Token{}
 }
 
-func (p *parser) synchronize() {
-	p.advance()
-	for !p.isAtEnd() {
-		if p.previous().TokenType == tok.TokenType_Semicolon {
+func synchronize() {
+	advance()
+	for !isAtEnd() {
+		if previous().TokenType == tok.TokenType_Semicolon {
 			return
 		}
-		switch p.peek().TokenType { // finding end
+		switch peek().TokenType { // finding end
 		case tok.TokenType_Class:
 			return
 		case tok.TokenType_Fun:
@@ -102,6 +87,6 @@ func (p *parser) synchronize() {
 		case tok.TokenType_Return:
 			return
 		}
-		p.advance()
+		advance()
 	}
 }

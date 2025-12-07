@@ -6,7 +6,10 @@ import (
 	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
-// program        → statement* EOF ;
+// program        → declaration* EOF ;
+// declaration    → varDecl | statement ;
+// varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
 // statement      → exprStmt | printStmt ;
 // printStmt      → "print" expression ";" ;
 // exprStmt       → expression ";" ;
@@ -17,84 +20,108 @@ import (
 // term           → factor ( ( "-" | "+" ) factor )* ;
 // factor         → unary ( ( "/" | "*" ) unary )* ;
 // unary          → ( "!" | "-" ) unary | primary ;
-// primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+// primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 
-func (p *parser) program() []ast.Statement {
+func program() []ast.Statement {
 	var statements []ast.Statement
-	for !p.isAtEnd() {
-		statements = append(statements, p.statement())
+	for !isAtEnd() {
+		statements = append(statements, declaration())
 	}
 	return statements
 }
-func (p *parser) statement() ast.Statement {
-	if p.match(tok.TokenType_Print) {
-		return p.printStmt()
+func declaration() ast.Statement {
+	defer func() {
+		if err := recover(); err != nil {
+			if errors.HadParseError {
+				synchronize()
+			} else {
+				panic(err)
+			}
+		}
+	}()
+	if match(tok.TokenType_Var) {
+		return varDecl()
 	}
-	return p.expressionStmt()
+	return statement()
 }
-func (p *parser) printStmt() ast.Statement {
-	value := p.expression()
-	p.consume(tok.TokenType_Semicolon, "Expect ';' after value.")
+func varDecl() ast.Statement {
+	name := consume(tok.TokenType_Identifier, "Expect variable name.")
+	var initializer ast.Expression = nil
+	if match(tok.TokenType_Equal) {
+		initializer = expression()
+	}
+	consume(tok.TokenType_Semicolon, "Expect ';' after variable declaration.")
+	return &ast.VarStmt{Name: name, Initializer: initializer}
+}
+func statement() ast.Statement {
+	if match(tok.TokenType_Print) {
+		return printStmt()
+	}
+	return expressionStmt()
+}
+func printStmt() ast.Statement {
+	value := expression()
+	consume(tok.TokenType_Semicolon, "Expect ';' after value.")
 	return &ast.PrintStmt{Expr: value}
 }
-func (p *parser) expressionStmt() ast.Statement {
-	value := p.expression()
-	p.consume(tok.TokenType_Semicolon, "Expect ';' after value.")
+func expressionStmt() ast.Statement {
+	value := expression()
+	consume(tok.TokenType_Semicolon, "Expect ';' after value.")
 	return &ast.ExpressionStmt{Expr: value}
 }
 
-func (p *parser) expression() ast.Expression {
-	return p.equality()
+func expression() ast.Expression {
+	return equality()
 }
-func (p *parser) equality() ast.Expression {
-	lExpr := p.comparison()
-	for p.match(tok.TokenType_BangEqual, tok.TokenType_EqualEqual) {
-		operator := p.previous()
-		rExpr := p.comparison()
+func equality() ast.Expression {
+	lExpr := comparison()
+	for match(tok.TokenType_BangEqual, tok.TokenType_EqualEqual) {
+		operator := previous()
+		rExpr := comparison()
 		lExpr = &ast.Binary{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
-func (p *parser) comparison() ast.Expression {
-	lExpr := p.term()
-	for p.match(tok.TokenType_Greater,
+func comparison() ast.Expression {
+	lExpr := term()
+	for match(tok.TokenType_Greater,
 		tok.TokenType_GreaterEqual,
 		tok.TokenType_Less,
 		tok.TokenType_LessEqual) {
 
-		operator := p.previous()
-		rExpr := p.term()
+		operator := previous()
+		rExpr := term()
 		lExpr = &ast.Binary{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
-func (p *parser) term() ast.Expression {
-	lExpr := p.factor()
-	for p.match(tok.TokenType_Plus, tok.TokenType_Minus) {
-		operator := p.previous()
-		rExpr := p.factor()
+func term() ast.Expression {
+	lExpr := factor()
+	for match(tok.TokenType_Plus, tok.TokenType_Minus) {
+		operator := previous()
+		rExpr := factor()
 		lExpr = &ast.Binary{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
-func (p *parser) factor() ast.Expression {
-	lExpr := p.unary()
-	for p.match(tok.TokenType_Slash, tok.TokenType_Star) {
-		operator := p.previous()
-		rExpr := p.unary()
+func factor() ast.Expression {
+	lExpr := unary()
+	for match(tok.TokenType_Slash, tok.TokenType_Star) {
+		operator := previous()
+		rExpr := unary()
 		lExpr = &ast.Binary{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
-func (p *parser) unary() ast.Expression {
-	if p.match(tok.TokenType_Bang, tok.TokenType_Minus) {
-		operator := p.previous()
-		rExpr := p.unary()
+func unary() ast.Expression {
+	if match(tok.TokenType_Bang, tok.TokenType_Minus) {
+		operator := previous()
+		rExpr := unary()
 		return &ast.Unary{Operator: operator, Right: rExpr}
 	}
-	return p.primary()
+	return primary()
 }
-func (p *parser) primary() ast.Expression {
+func primary() ast.Expression {
 	literalTokenTypes := []tok.TokenType{
 		tok.TokenType_Number,
 		tok.TokenType_String,
@@ -103,15 +130,18 @@ func (p *parser) primary() ast.Expression {
 		tok.TokenType_Nil,
 	}
 	for _, tokenType := range literalTokenTypes {
-		if p.match(tokenType) {
-			return &ast.Literal{Value: p.previous().Literal}
+		if match(tokenType) {
+			return &ast.Literal{Value: previous().Literal}
 		}
 	}
-	if p.match(tok.TokenType_LeftParen) {
-		expr := p.expression()
-		p.consume(tok.TokenType_RightParen, "Expect ')' after expression.")
+	if match(tok.TokenType_LeftParen) {
+		expr := expression()
+		consume(tok.TokenType_RightParen, "Expect ')' after expression.")
 		return &ast.Grouping{Expression: expr}
 	}
-	errors.ReportToken(p.peek(), "Expect expression.")
+	if match(tok.TokenType_Identifier) {
+		return &ast.Variable{Name: previous()}
+	}
+	errors.ReportToken(peek(), "Expect expression.")
 	return nil
 }

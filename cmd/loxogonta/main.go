@@ -53,10 +53,8 @@ func runPrompt() {
 }
 
 func run(source string) {
-	scanner := scn.NewScanner(source)
-	tokens := scanner.ScanTokens()
-	parser := prs.NewParser(tokens)
-	statements := parser.Parse()
+	tokens := scn.ScanSource(source)
+	statements := prs.ParseTokens(tokens)
 	if errors.HadError {
 		return
 	}

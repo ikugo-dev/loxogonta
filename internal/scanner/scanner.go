@@ -7,90 +7,93 @@ import (
 	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
-type Scanner struct {
-	source  string
-	tokens  []tok.Token
-	start   int
-	current int
-	line    int
+var source string
+var tokens []tok.Token
+var start int
+var current int
+var line int
+
+func resetData(newSource string) {
+	source = newSource
+	tokens = []tok.Token{}
+	start = 0
+	current = 0
+	line = 1
 }
 
-func NewScanner(source string) Scanner {
-	return Scanner{source: source, line: 1}
-}
-
-func (s *Scanner) ScanTokens() []tok.Token {
-	for !s.isAtEnd() {
-		s.start = s.current // We are at the beginning of the next lexeme.
-		s.scanToken()
+func ScanSource(source string) []tok.Token {
+	resetData(source)
+	for !isAtEnd() {
+		start = current // We are at the beginning of the next lexeme.
+		scanToken()
 	}
-	s.tokens = append(s.tokens, tok.Token{TokenType: tok.TokenType_Eof, Lexeme: "", Literal: 1, Line: s.line}) // QoL
-	return s.tokens
+	tokens = append(tokens, tok.Token{TokenType: tok.TokenType_Eof, Lexeme: "", Literal: 1, Line: line}) // QoL
+	return tokens
 }
 
-func (s *Scanner) advance() rune {
-	s.current++
-	return rune(s.source[s.current-1])
+func advance() rune {
+	current++
+	return rune(source[current-1])
 }
 
-func (s *Scanner) peek() rune {
-	if s.isAtEnd() {
+func peek() rune {
+	if isAtEnd() {
 		return ' '
 	}
-	return rune(s.source[s.current])
+	return rune(source[current])
 }
 
-func (s *Scanner) peekNext() rune {
-	s.current++
-	value := s.peek()
-	s.current--
+func peekNext() rune {
+	current++
+	value := peek()
+	current--
 	return value
 }
 
-func (s *Scanner) isAtEnd() bool {
-	return s.current >= len(s.source)
+func isAtEnd() bool {
+	return current >= len(source)
 }
 
 func isDigit(c rune) bool {
 	return c >= '0' && c <= '9'
 }
 
-func (s *Scanner) scanNumber() {
-	for isDigit(s.peek()) && !s.isAtEnd() {
-		s.advance()
+func scanNumber() {
+	for isDigit(peek()) && !isAtEnd() {
+		advance()
 	}
-	if s.peek() == '.' && isDigit(s.peekNext()) { // Look for a fractional part.
-		s.advance() // Consume the "."
-		for isDigit(s.peek()) {
-			s.advance()
+	if peek() == '.' && isDigit(peekNext()) { // Look for a fractional part.
+		advance() // Consume the "."
+		for isDigit(peek()) {
+			advance()
 		}
 	}
-	for isDigit(s.peek()) {
-		s.advance()
+	for isDigit(peek()) {
+		advance()
 	}
-	value, err := strconv.ParseFloat(s.source[s.start:s.current], 64)
+	value, err := strconv.ParseFloat(source[start:current], 64)
 	if err != nil {
-		errors.Report(s.line, "", "Invalid number.")
+		errors.Report(line, "", "Invalid number.")
 		return
 	}
-	s.addTokenWithLiteral(tok.TokenType_Number, value)
+	addTokenWithLiteral(tok.TokenType_Number, value)
 }
 
-func (s *Scanner) scanString() {
-	for s.peek() != '"' && !s.isAtEnd() {
-		if s.peek() == '\n' { // Multi-line string support
-			s.line++
+func scanString() {
+	for peek() != '"' && !isAtEnd() {
+		if peek() == '\n' { // Multi-line string support
+			line++
 		}
-		s.advance()
+		advance()
 	}
-	if s.isAtEnd() {
-		errors.Report(s.line, "", "Unterminated string.")
+	if isAtEnd() {
+		errors.Report(line, "", "Unterminated string.")
 		return
 	}
 	// The closing ".
-	s.advance()
-	value := s.source[s.start+1 : s.current-1]
-	s.addTokenWithLiteral(tok.TokenType_String, value)
+	advance()
+	value := source[start+1 : current-1]
+	addTokenWithLiteral(tok.TokenType_String, value)
 }
 
 func isAlpha(c rune) bool {
@@ -103,44 +106,44 @@ func isAlphaNumeric(c rune) bool {
 	return isAlpha(c) || isDigit(c)
 }
 
-func (s *Scanner) identifier() {
-	for isAlphaNumeric(s.peek()) {
-		s.advance()
+func identifier() {
+	for isAlphaNumeric(peek()) {
+		advance()
 	}
-	text := s.source[s.start:s.current]
+	text := source[start:current]
 	tokenType := keywords[text]
 	if tokenType == tok.TokenType_InvalidToken { // If it isnt a keyword
 		tokenType = tok.TokenType_Identifier
 	}
-	s.addToken(tokenType)
+	addToken(tokenType)
 }
 
 // TOKEN FUNCTIONS
 
-func (s *Scanner) addToken(tokenType tok.TokenType) {
-	s.addTokenWithLiteral(tokenType, nil)
+func addToken(tokenType tok.TokenType) {
+	addTokenWithLiteral(tokenType, nil)
 }
 
-func (s *Scanner) addTokenWithLiteral(tokenType tok.TokenType, literal any) {
-	text := s.source[s.start:s.current]
-	s.tokens = append(s.tokens, tok.Token{TokenType: tokenType, Lexeme: text, Literal: literal, Line: s.line})
+func addTokenWithLiteral(tokenType tok.TokenType, literal any) {
+	text := source[start:current]
+	tokens = append(tokens, tok.Token{TokenType: tokenType, Lexeme: text, Literal: literal, Line: line})
 }
 
-func (s *Scanner) match(expected rune) bool {
-	if s.isAtEnd() {
+func match(expected rune) bool {
+	if isAtEnd() {
 		return false
 	}
-	if rune(s.source[s.current]) != expected {
+	if rune(source[current]) != expected {
 		return false
 	}
-	s.current++
+	current++
 	return true
 }
 
-func (s *Scanner) matchAddToken(expected rune, a, b tok.TokenType) {
-	if s.match(expected) {
-		s.addToken(a)
+func matchAddToken(expected rune, a, b tok.TokenType) {
+	if match(expected) {
+		addToken(a)
 	} else {
-		s.addToken(b)
+		addToken(b)
 	}
 }

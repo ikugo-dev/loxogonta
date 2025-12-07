@@ -10,27 +10,33 @@ import (
 
 func Interpret(statements []ast.Statement) {
 	for _, statement := range statements {
-		evalStatement(statement)
+		evalStmt(statement)
 	}
 }
 
-func evalStatement(statement ast.Statement) {
+func evalStmt(statement ast.Statement) {
 	switch s := statement.(type) {
 	case *ast.PrintStmt:
-		fmt.Println(" --> ", eval(s.Expr))
+		fmt.Println(" --> ", evalExpr(s.Expr))
 	case *ast.ExpressionStmt:
-		eval(s.Expr)
+		evalExpr(s.Expr)
+	case *ast.VarStmt:
+		var value any = nil
+		if s.Initializer != nil {
+			value = evalExpr(s.Initializer)
+		}
+		put(s.Name.Lexeme, value)
 	}
 }
 
-func eval(e ast.Expression) any {
+func evalExpr(e ast.Expression) any {
 	switch expr := e.(type) {
 	case *ast.Literal:
 		return expr.Value
 	case *ast.Grouping:
-		return eval(expr.Expression)
+		return evalExpr(expr.Expression)
 	case *ast.Unary:
-		right := eval(expr.Right)
+		right := evalExpr(expr.Right)
 		switch expr.Operator.TokenType {
 		case tok.TokenType_Minus:
 			if !areNumbers(right) {
@@ -42,8 +48,8 @@ func eval(e ast.Expression) any {
 			return !isTruthy(right)
 		}
 	case *ast.Binary:
-		left := eval(expr.Left)
-		right := eval(expr.Right)
+		left := evalExpr(expr.Left)
+		right := evalExpr(expr.Right)
 		switch expr.Operator.TokenType {
 		case tok.TokenType_Plus:
 			if !areNumbers(left, right) && !areStrings(left, right) {
@@ -103,6 +109,8 @@ func eval(e ast.Expression) any {
 		case tok.TokenType_BangEqual:
 			return !isEqual(left, right)
 		}
+	case *ast.Variable:
+		return get(expr.Name)
 	default:
 		panic("Unexpected expression")
 	}

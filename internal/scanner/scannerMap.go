@@ -5,59 +5,59 @@ import (
 	t "github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
-func (s *Scanner) scanToken() {
-	var character rune = s.advance()
+func scanToken() {
+	var character rune = advance()
 	switch character {
 	case '(':
-		s.addToken(t.TokenType_LeftParen)
+		addToken(t.TokenType_LeftParen)
 	case ')':
-		s.addToken(t.TokenType_RightParen)
+		addToken(t.TokenType_RightParen)
 	case '{':
-		s.addToken(t.TokenType_LeftBrace)
+		addToken(t.TokenType_LeftBrace)
 	case '}':
-		s.addToken(t.TokenType_RightBrace)
+		addToken(t.TokenType_RightBrace)
 	case ',':
-		s.addToken(t.TokenType_Comma)
+		addToken(t.TokenType_Comma)
 	case '.':
-		s.addToken(t.TokenType_Dot)
+		addToken(t.TokenType_Dot)
 	case '-':
-		s.addToken(t.TokenType_Minus)
+		addToken(t.TokenType_Minus)
 	case '+':
-		s.addToken(t.TokenType_Plus)
+		addToken(t.TokenType_Plus)
 	case ';':
-		s.addToken(t.TokenType_Semicolon)
+		addToken(t.TokenType_Semicolon)
 	case '*':
-		s.addToken(t.TokenType_Star)
+		addToken(t.TokenType_Star)
 	case '!':
-		s.matchAddToken('=', t.TokenType_BangEqual, t.TokenType_Bang)
+		matchAddToken('=', t.TokenType_BangEqual, t.TokenType_Bang)
 	case '=':
-		s.matchAddToken('=', t.TokenType_EqualEqual, t.TokenType_Equal)
+		matchAddToken('=', t.TokenType_EqualEqual, t.TokenType_Equal)
 	case '<':
-		s.matchAddToken('=', t.TokenType_LessEqual, t.TokenType_Less)
+		matchAddToken('=', t.TokenType_LessEqual, t.TokenType_Less)
 	case '>':
-		s.matchAddToken('=', t.TokenType_GreaterEqual, t.TokenType_Greater)
+		matchAddToken('=', t.TokenType_GreaterEqual, t.TokenType_Greater)
 	case '"':
-		s.scanString()
+		scanString()
 	case '/':
-		if s.match('/') { // A comment goes until the end of the line.
-			for s.peek() != '\n' && !s.isAtEnd() {
-				s.advance()
+		if match('/') { // A comment goes until the end of the line.
+			for peek() != '\n' && !isAtEnd() {
+				advance()
 			}
 		} else {
-			s.addToken(t.TokenType_Slash)
+			addToken(t.TokenType_Slash)
 		}
 	case ' ': // Ignore whitespace.
 	case '\r':
 	case '\t':
 	case '\n':
-		s.line++
+		line++
 	default:
 		if isDigit(character) {
-			s.scanNumber()
+			scanNumber()
 		} else if isAlpha(character) {
-			s.identifier()
+			identifier()
 		} else {
-			errors.Report(s.line, "", "Unexpected character.")
+			errors.Report(line, "", "Unexpected character.")
 		}
 	}
 }
