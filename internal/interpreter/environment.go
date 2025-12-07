@@ -5,27 +5,39 @@ import (
 	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
-var values map[string]any = make(map[string]any)
-
-func put(name string, value any) {
-	values[name] = value
+type environment struct {
+	values map[string]any
+	parent *environment
 }
 
-func assign(token tok.Token, value any) {
-	value, exists := values[token.Lexeme]
+func createEnvironment() environment {
+	return environment{values: make(map[string]any), parent: nil}
+}
+func createEnvironmentWithParent(e environment) environment {
+	return environment{values: make(map[string]any), parent: &e}
+}
+
+func (e *environment) put(name string, value any) {
+	e.values[name] = value
+}
+
+func (e *environment) assign(token tok.Token, value any) {
+	value, exists := e.values[token.Lexeme]
 	if exists {
-		put(token.Lexeme, value)
+		e.put(token.Lexeme, value)
 		return
 	}
 	errors.ReportRuntime(token.Line, "variable assignment", "Undefined variable "+token.Lexeme)
 }
 
-func get(token tok.Token) any {
-	value, exists := values[token.Lexeme]
+func (e *environment) get(token tok.Token) any {
+	value, exists := e.values[token.Lexeme]
 	if exists {
 		return value
-	} else {
-		errors.ReportRuntime(token.Line, "variable reading", "Undefined variable "+token.Lexeme)
-		return nil
 	}
+	if e.parent != nil {
+		return e.parent.get(token)
+	}
+	errors.ReportRuntime(token.Line, "variable reading", "Undefined variable "+token.Lexeme)
+	return nil
 }

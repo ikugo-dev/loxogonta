@@ -16,7 +16,11 @@ type VarStmt struct {
 	Name        tok.Token
 	Initializer Expression
 }
+type BlockStmt struct {
+	Statements []Statement
+}
 
 func (s *PrintStmt) foo()      {}
 func (s *ExpressionStmt) foo() {}
 func (s *VarStmt) foo()        {}
+func (e *BlockStmt) foo()      {}

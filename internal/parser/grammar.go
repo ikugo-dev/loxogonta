@@ -10,9 +10,10 @@ import (
 // declaration    → varDecl | statement ;
 // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
-// statement      → printStmt | exprStmt ;
+// statement      → printStmt | exprStmt | block ;
 // printStmt      → "print" expression ";" ;
 // exprStmt       → expression ";" ;
+// block          → "{" declaration* "}" ;
 
 // expression     → assignment ;
 // assignment     → IDENTIFIER "=" assignment | equality ;
@@ -58,12 +59,23 @@ func statement() ast.Statement {
 	if match(tok.TokenType_Print) {
 		return printStmt()
 	}
+	if match(tok.TokenType_LeftBrace) {
+		return &ast.BlockStmt{Statements: block()}
+	}
 	return expressionStmt()
 }
 func printStmt() ast.Statement {
 	value := expression()
 	consume(tok.TokenType_Semicolon, "Expect ';' after value.")
 	return &ast.PrintStmt{Expr: value}
+}
+func block() []ast.Statement {
+	var statements []ast.Statement
+	for !check(tok.TokenType_RightBrace) && !isAtEnd() {
+		statements = append(statements, declaration())
+	}
+	consume(tok.TokenType_RightBrace, "Expect '}' after block.")
+	return statements
 }
 func expressionStmt() ast.Statement {
 	value := expression()

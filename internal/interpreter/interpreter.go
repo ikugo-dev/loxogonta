@@ -8,6 +8,8 @@ import (
 	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
+var storage environment = createEnvironment()
+
 func Interpret(statements []ast.Statement) {
 	for _, statement := range statements {
 		evalStmt(statement)
@@ -25,7 +27,14 @@ func evalStmt(statement ast.Statement) {
 		if s.Initializer != nil {
 			value = evalExpr(s.Initializer)
 		}
-		put(s.Name.Lexeme, value)
+		storage.put(s.Name.Lexeme, value)
+	case *ast.BlockStmt:
+		oldStorage := storage
+		storage = createEnvironmentWithParent(oldStorage)
+		for _, statement := range s.Statements {
+			evalStmt(statement)
+		}
+		storage = oldStorage
 	}
 }
 
@@ -110,10 +119,10 @@ func evalExpr(e ast.Expression) any {
 			return !isEqual(left, right)
 		}
 	case *ast.Variable:
-		return get(expr.Name)
+		return storage.get(expr.Name)
 	case *ast.Assign:
 		value := evalExpr(expr.Value)
-		assign(expr.Name, value)
+		storage.assign(expr.Name, value)
 		return value
 	default:
 		panic("Unexpected expression")
