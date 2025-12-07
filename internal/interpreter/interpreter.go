@@ -10,18 +10,20 @@ import (
 
 var storage environment = createEnvironment()
 
-func Interpret(statements []ast.Statement) {
+func Interpret(statements []ast.Statement) any {
+	var value any
 	for _, statement := range statements {
-		evalStmt(statement)
+		value = evalStmt(statement)
 	}
+	return value
 }
 
-func evalStmt(statement ast.Statement) {
+func evalStmt(statement ast.Statement) any {
 	switch s := statement.(type) {
 	case *ast.PrintStmt:
-		fmt.Println("--> ", evalExpr(s.Expr))
+		fmt.Println(evalExpr(s.Expr))
 	case *ast.ExpressionStmt:
-		evalExpr(s.Expr)
+		return evalExpr(s.Expr)
 	case *ast.VarStmt:
 		var value any = nil
 		if s.Initializer != nil {
@@ -29,13 +31,16 @@ func evalStmt(statement ast.Statement) {
 		}
 		storage.put(s.Name.Lexeme, value)
 	case *ast.BlockStmt:
+		var value any = nil
 		oldStorage := storage
 		storage = createEnvironmentWithParent(oldStorage)
 		for _, statement := range s.Statements {
-			evalStmt(statement)
+			value = evalStmt(statement)
 		}
 		storage = oldStorage
+		return value
 	}
+	return nil
 }
 
 func evalExpr(e ast.Expression) any {

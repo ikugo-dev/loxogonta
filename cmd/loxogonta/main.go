@@ -47,16 +47,18 @@ func runPrompt() {
 		if err != nil {
 			break
 		}
-		run(line)
+		if lastExpr := run(line); lastExpr != nil {
+			fmt.Println("--> ", lastExpr)
+		}
 		errors.HadError = false
 	}
 }
 
-func run(source string) {
+func run(source string) any {
 	tokens := scn.ScanSource(source)
 	statements := prs.ParseTokens(tokens)
 	if errors.HadError {
-		return
+		return nil
 	}
-	intr.Interpret(statements)
+	return intr.Interpret(statements)
 }
