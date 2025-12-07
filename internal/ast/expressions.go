@@ -36,9 +36,14 @@ type Binary struct {
 type Variable struct {
 	Name tok.Token
 }
+type Assign struct {
+	Name  tok.Token
+	Value Expression
+}
 
 func (e *Literal) foo()  {}
 func (e *Grouping) foo() {}
 func (e *Unary) foo()    {}
 func (e *Binary) foo()   {}
 func (e *Variable) foo() {}
+func (e *Assign) foo()   {}

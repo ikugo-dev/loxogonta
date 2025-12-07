@@ -17,7 +17,7 @@ func Interpret(statements []ast.Statement) {
 func evalStmt(statement ast.Statement) {
 	switch s := statement.(type) {
 	case *ast.PrintStmt:
-		fmt.Println(" --> ", evalExpr(s.Expr))
+		fmt.Println("--> ", evalExpr(s.Expr))
 	case *ast.ExpressionStmt:
 		evalExpr(s.Expr)
 	case *ast.VarStmt:
@@ -111,6 +111,10 @@ func evalExpr(e ast.Expression) any {
 		}
 	case *ast.Variable:
 		return get(expr.Name)
+	case *ast.Assign:
+		value := evalExpr(expr.Value)
+		assign(expr.Name, value)
+		return value
 	default:
 		panic("Unexpected expression")
 	}

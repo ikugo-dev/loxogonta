@@ -10,11 +10,12 @@ import (
 // declaration    → varDecl | statement ;
 // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
-// statement      → exprStmt | printStmt ;
+// statement      → printStmt | exprStmt ;
 // printStmt      → "print" expression ";" ;
 // exprStmt       → expression ";" ;
 
-// expression     → equality ;
+// expression     → assignment ;
+// assignment     → IDENTIFIER "=" assignment | equality ;
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 // term           → factor ( ( "-" | "+" ) factor )* ;
@@ -71,8 +72,22 @@ func expressionStmt() ast.Statement {
 }
 
 func expression() ast.Expression {
-	return equality()
+	return assignment()
 }
+func assignment() ast.Expression {
+	lExpr := equality()
+	if match(tok.TokenType_Equal) {
+		equals := previous()
+		rExpr := assignment()                        // assignment is right associative
+		if lvalue, ok := lExpr.(*ast.Variable); ok { // turn expression into lvalue
+			return &ast.Assign{Name: lvalue.Name, Value: rExpr}
+		}
+		errors.ReportToken(equals, "Invalid assignment target.")
+	}
+	return lExpr
+}
+
+// return equality()
 func equality() ast.Expression {
 	lExpr := comparison()
 	for match(tok.TokenType_BangEqual, tok.TokenType_EqualEqual) {

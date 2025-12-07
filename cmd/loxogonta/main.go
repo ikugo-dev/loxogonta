@@ -58,8 +58,5 @@ func run(source string) {
 	if errors.HadError {
 		return
 	}
-	for _, statement := range statements {
-		fmt.Printf("statement: %v\n", statement)
-	}
 	intr.Interpret(statements)
 }

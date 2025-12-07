@@ -11,12 +11,21 @@ func put(name string, value any) {
 	values[name] = value
 }
 
+func assign(token tok.Token, value any) {
+	value, exists := values[token.Lexeme]
+	if exists {
+		put(token.Lexeme, value)
+		return
+	}
+	errors.ReportRuntime(token.Line, "variable assignment", "Undefined variable "+token.Lexeme)
+}
+
 func get(token tok.Token) any {
 	value, exists := values[token.Lexeme]
 	if exists {
 		return value
 	} else {
-		errors.ReportRuntime(token.Line, "interpreter variable reading", "Undefined variable "+token.Lexeme)
+		errors.ReportRuntime(token.Line, "variable reading", "Undefined variable "+token.Lexeme)
 		return nil
 	}
 }
