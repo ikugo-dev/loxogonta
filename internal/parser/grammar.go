@@ -17,7 +17,9 @@ import (
 // ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
 
 // expression     → assignment ;
-// assignment     → IDENTIFIER "=" assignment | equality ;
+// assignment     → IDENTIFIER "=" assignment | logic_or ;
+// logic_or       → logic_and ( "or" logic_and )* ;
+// logic_and      → equality ( "and" equality )* ;
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 // term           → factor ( ( "-" | "+" ) factor )* ;
@@ -105,7 +107,7 @@ func expression() ast.Expression {
 	return assignment()
 }
 func assignment() ast.Expression {
-	lExpr := equality()
+	lExpr := logicalOr()
 	if match(tok.TokenType_Equal) {
 		equals := previous()
 		rExpr := assignment()                        // assignment is right associative
@@ -116,8 +118,24 @@ func assignment() ast.Expression {
 	}
 	return lExpr
 }
-
-// return equality()
+func logicalOr() ast.Expression {
+	lExpr := logicalAnd()
+	for match(tok.TokenType_Or) {
+		operator := previous()
+		rExpr := logicalAnd()
+		lExpr = &ast.Logical{Left: lExpr, Operator: operator, Right: rExpr}
+	}
+	return lExpr
+}
+func logicalAnd() ast.Expression {
+	lExpr := equality()
+	for match(tok.TokenType_And) {
+		operator := previous()
+		rExpr := equality()
+		lExpr = &ast.Logical{Left: lExpr, Operator: operator, Right: rExpr}
+	}
+	return lExpr
+}
 func equality() ast.Expression {
 	lExpr := comparison()
 	for match(tok.TokenType_BangEqual, tok.TokenType_EqualEqual) {

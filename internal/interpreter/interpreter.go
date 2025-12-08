@@ -135,6 +135,15 @@ func evalExpr(e ast.Expression) any {
 		value := evalExpr(expr.Value)
 		storage.assign(expr.Name, value)
 		return value
+	case *ast.Logical:
+		leftValue := evalExpr(expr.Left)
+		if expr.Operator.TokenType == tok.TokenType_Or && isTruthy(leftValue) {
+			return leftValue
+		}
+		if expr.Operator.TokenType == tok.TokenType_And && !isTruthy(leftValue) {
+			return leftValue
+		}
+		return evalExpr(expr.Right)
 	default:
 		panic("Unexpected expression")
 	}

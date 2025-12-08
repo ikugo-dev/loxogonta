@@ -40,6 +40,11 @@ type Assign struct {
 	Name  tok.Token
 	Value Expression
 }
+type Logical struct {
+	Left     Expression
+	Operator tok.Token
+	Right    Expression
+}
 
 func (e *Literal) foo()  {}
 func (e *Grouping) foo() {}
@@ -47,3 +52,4 @@ func (e *Unary) foo()    {}
 func (e *Binary) foo()   {}
 func (e *Variable) foo() {}
 func (e *Assign) foo()   {}
+func (e *Logical) foo()  {}
