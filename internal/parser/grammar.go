@@ -10,11 +10,13 @@ import (
 // declaration    → varDecl | statement ;
 // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
-// statement      → printStmt | exprStmt | block | ifStmt ;
-// printStmt      → "print" expression ";" ;
-// exprStmt       → expression ";" ;
+// statement      → block | printStmt | expressionStmt | ifStmt | whileStmt | forStmt
 // block          → "{" declaration* "}" ;
+// printStmt      → "print" expression ";" ;
+// expressionStmt → expression ";" ;
 // ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
+// whileStmt      → "while" "(" expression ")" statement ;
+// forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
 
 // expression     → assignment ;
 // assignment     → IDENTIFIER "=" assignment | logic_or ;
@@ -69,12 +71,13 @@ func statement() ast.Statement {
 	if match(tok.TokenType_If) {
 		return ifStmt()
 	}
+	if match(tok.TokenType_While) {
+		return whileStmt()
+	}
+	if match(tok.TokenType_For) {
+		return forStmt()
+	}
 	return expressionStmt()
-}
-func printStmt() ast.Statement {
-	value := expression()
-	consume(tok.TokenType_Semicolon, "Expect ';' after value.")
-	return &ast.PrintStmt{Expr: value}
 }
 func block() []ast.Statement {
 	var statements []ast.Statement
@@ -83,6 +86,16 @@ func block() []ast.Statement {
 	}
 	consume(tok.TokenType_RightBrace, "Expect '}' after block.")
 	return statements
+}
+func printStmt() ast.Statement {
+	value := expression()
+	consume(tok.TokenType_Semicolon, "Expect ';' after value.")
+	return &ast.PrintStmt{Expr: value}
+}
+func expressionStmt() ast.Statement {
+	value := expression()
+	consume(tok.TokenType_Semicolon, "Expect ';' after value.")
+	return &ast.ExpressionStmt{Expr: value}
 }
 func ifStmt() ast.Statement {
 	consume(tok.TokenType_LeftParen, "Expect '(' after 'if'.")
@@ -95,14 +108,51 @@ func ifStmt() ast.Statement {
 	}
 	return &ast.IfStmt{Condition: condition, ThenBranch: thenBranch, ElseBranch: elseBranch}
 }
-
-// ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
-func expressionStmt() ast.Statement {
-	value := expression()
-	consume(tok.TokenType_Semicolon, "Expect ';' after value.")
-	return &ast.ExpressionStmt{Expr: value}
+func whileStmt() ast.Expression {
+	consume(tok.TokenType_LeftParen, "Expect '(' after 'while'.")
+	condition := expression()
+	consume(tok.TokenType_RightParen, "Expect ')' after while condition.")
+	body := statement()
+	return &ast.WhileStmt{Condition: condition, Body: body}
 }
+func forStmt() ast.Expression { // desugaring
+	consume(tok.TokenType_LeftParen, "Expect '(' after 'for'.")
+	var initializer ast.Statement
+	if match(tok.TokenType_Semicolon) {
+		initializer = nil
+	} else if match(tok.TokenType_Var) {
+		initializer = varDecl()
+	} else {
+		initializer = expressionStmt()
+	}
 
+	var condition ast.Expression = nil
+	if !check(tok.TokenType_Semicolon) {
+		condition = expression()
+	}
+	consume(tok.TokenType_Semicolon, "Expect ';' after loop condition.")
+
+	var increment ast.Expression = nil
+	if !check(tok.TokenType_RightParen) {
+		increment = expression()
+	}
+	consume(tok.TokenType_RightParen, "Expect ')' after for clauses.")
+
+	var body ast.Statement = statement()
+
+	if increment != nil {
+		body = &ast.BlockStmt{Statements: []ast.Statement{body, &ast.ExpressionStmt{Expr: increment}}}
+	}
+	if condition == nil {
+		condition = &ast.Literal{Value: true}
+	}
+	body = &ast.WhileStmt{Condition: condition, Body: body}
+	if initializer != nil {
+		body = &ast.BlockStmt{Statements: []ast.Statement{initializer, body}}
+	}
+
+	return body
+}
 func expression() ast.Expression {
 	return assignment()
 }

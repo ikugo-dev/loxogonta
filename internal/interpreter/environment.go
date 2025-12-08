@@ -27,6 +27,10 @@ func (e *environment) assign(token tok.Token, value any) {
 		e.put(token.Lexeme, value)
 		return
 	}
+	if e.parent != nil {
+		e.parent.put(token.Lexeme, value)
+		return
+	}
 	errors.ReportRuntime(token.Line, "variable assignment", "Undefined variable "+token.Lexeme)
 }
 

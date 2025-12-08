@@ -45,6 +45,10 @@ func evalStmt(statement ast.Statement) any {
 		} else {
 			return evalStmt(s.ElseBranch)
 		}
+	case *ast.WhileStmt:
+		for isTruthy(evalExpr(s.Condition)) {
+			evalStmt(s.Body)
+		}
 	}
 	return nil
 }

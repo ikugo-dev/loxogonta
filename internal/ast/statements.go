@@ -24,9 +24,14 @@ type IfStmt struct {
 	ThenBranch Statement
 	ElseBranch Statement
 }
+type WhileStmt struct {
+	Condition Expression
+	Body      Statement
+}
 
 func (s *PrintStmt) foo()      {}
 func (s *ExpressionStmt) foo() {}
 func (s *VarStmt) foo()        {}
 func (e *BlockStmt) foo()      {}
 func (e *IfStmt) foo()         {}
+func (e *WhileStmt) foo()      {}
