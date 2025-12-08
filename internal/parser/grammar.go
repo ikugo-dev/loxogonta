@@ -10,10 +10,11 @@ import (
 // declaration    → varDecl | statement ;
 // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
-// statement      → printStmt | exprStmt | block ;
+// statement      → printStmt | exprStmt | block | ifStmt ;
 // printStmt      → "print" expression ";" ;
 // exprStmt       → expression ";" ;
 // block          → "{" declaration* "}" ;
+// ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
 
 // expression     → assignment ;
 // assignment     → IDENTIFIER "=" assignment | equality ;
@@ -47,7 +48,8 @@ func declaration() ast.Statement {
 	return statement()
 }
 func varDecl() ast.Statement {
-	name := consume(tok.TokenType_Identifier, "Expect variable name.")
+	consume(tok.TokenType_Identifier, "Expect variable name.")
+	name := previous()
 	var initializer ast.Expression = nil
 	if match(tok.TokenType_Equal) {
 		initializer = expression()
@@ -61,6 +63,9 @@ func statement() ast.Statement {
 	}
 	if match(tok.TokenType_LeftBrace) {
 		return &ast.BlockStmt{Statements: block()}
+	}
+	if match(tok.TokenType_If) {
+		return ifStmt()
 	}
 	return expressionStmt()
 }
@@ -77,6 +82,19 @@ func block() []ast.Statement {
 	consume(tok.TokenType_RightBrace, "Expect '}' after block.")
 	return statements
 }
+func ifStmt() ast.Statement {
+	consume(tok.TokenType_LeftParen, "Expect '(' after 'if'.")
+	condition := expression()
+	consume(tok.TokenType_RightParen, "Expect ')' after if condition.")
+	thenBranch := statement()
+	var elseBranch ast.Expression = nil
+	if match(tok.TokenType_Else) {
+		elseBranch = statement()
+	}
+	return &ast.IfStmt{Condition: condition, ThenBranch: thenBranch, ElseBranch: elseBranch}
+}
+
+// ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
 func expressionStmt() ast.Statement {
 	value := expression()
 	consume(tok.TokenType_Semicolon, "Expect ';' after value.")

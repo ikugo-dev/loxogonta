@@ -39,6 +39,12 @@ func evalStmt(statement ast.Statement) any {
 		}
 		storage = oldStorage
 		return value
+	case *ast.IfStmt:
+		if isTruthy(evalExpr(s.Condition)) {
+			return evalStmt(s.ThenBranch)
+		} else {
+			return evalStmt(s.ElseBranch)
+		}
 	}
 	return nil
 }

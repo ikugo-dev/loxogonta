@@ -19,8 +19,14 @@ type VarStmt struct {
 type BlockStmt struct {
 	Statements []Statement
 }
+type IfStmt struct {
+	Condition  Expression
+	ThenBranch Statement
+	ElseBranch Statement
+}
 
 func (s *PrintStmt) foo()      {}
 func (s *ExpressionStmt) foo() {}
 func (s *VarStmt) foo()        {}
 func (e *BlockStmt) foo()      {}
+func (e *IfStmt) foo()         {}

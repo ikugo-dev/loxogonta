@@ -55,12 +55,12 @@ func previous() tok.Token {
 	return tokens[current-1]
 }
 
-func consume(tokenType tok.TokenType, message string) tok.Token { // is return needed?
+func consume(tokenType tok.TokenType, message string) {
 	if check(tokenType) {
-		return advance()
+		advance()
+		return
 	}
 	errors.ReportToken(peek(), message)
-	return tok.Token{}
 }
 
 func synchronize() {

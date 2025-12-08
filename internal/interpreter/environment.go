@@ -22,7 +22,7 @@ func (e *environment) put(name string, value any) {
 }
 
 func (e *environment) assign(token tok.Token, value any) {
-	value, exists := e.values[token.Lexeme]
+	_, exists := e.values[token.Lexeme]
 	if exists {
 		e.put(token.Lexeme, value)
 		return
