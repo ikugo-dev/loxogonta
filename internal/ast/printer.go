@@ -5,16 +5,16 @@ import "fmt"
 func ToString(e Expression) string {
 	switch expr := e.(type) {
 
-	case *Literal:
+	case *LiteralExpr:
 		return fmt.Sprintf("%v", expr.Value)
-	case *Grouping:
+	case *GroupingExpr:
 		return "(" + ToString(expr.Expression) + ")"
-	case *Unary:
+	case *UnaryExpr:
 		return "(" +
 			expr.Operator.Lexeme + " " +
 			ToString(expr.Right) +
 			")"
-	case *Binary:
+	case *BinaryExpr:
 		return "(" +
 			expr.Operator.Lexeme + " " +
 			ToString(expr.Left) + " " +

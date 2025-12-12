@@ -7,8 +7,11 @@ import (
 )
 
 // program        → declaration* EOF ;
-// declaration    → varDecl | statement ;
+// declaration    → varDecl | funDecl | statement ;
 // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+// funDecl        → "fun" function ;
+// function       → IDENTIFIER "(" parameters? ")" block ;
+// parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 
 // statement      → block | printStmt | expressionStmt | ifStmt | whileStmt | forStmt
 // block          → "{" declaration* "}" ;
@@ -26,7 +29,8 @@ import (
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 // term           → factor ( ( "-" | "+" ) factor )* ;
 // factor         → unary ( ( "/" | "*" ) unary )* ;
-// unary          → ( "!" | "-" ) unary | primary ;
+// unary          → ( "!" | "-" ) unary | call ;
+// call           → primary ( "(" arguments? ")" )* ;
 // primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 
 func program() []ast.Statement {
@@ -49,6 +53,9 @@ func declaration() ast.Statement {
 	if match(tok.TokenType_Var) {
 		return varDecl()
 	}
+	if match(tok.TokenType_Fun) {
+		return funDecl()
+	}
 	return statement()
 }
 func varDecl() ast.Statement {
@@ -60,6 +67,30 @@ func varDecl() ast.Statement {
 	}
 	consume(tok.TokenType_Semicolon, "Expect ';' after variable declaration.")
 	return &ast.VarStmt{Name: name, Initializer: initializer}
+}
+func funDecl() ast.Statement { // we implemented just this function
+	// "function" and "parameters" are in the grammar for readability
+	consume(tok.TokenType_Identifier, "Expect function name.")
+	name := previous()
+
+	consume(tok.TokenType_LeftParen, "Expect '(' after function name.")
+
+	var parameters []tok.Token
+	if !check(tok.TokenType_RightParen) {
+		consume(tok.TokenType_Identifier, "Expect parameter name.")
+		parameters = append(parameters, previous())
+		for match(tok.TokenType_Comma) {
+			if len(parameters) >= 255 {
+				errors.ReportToken(peek(), "Can't have more than 255 parameters.")
+			}
+			consume(tok.TokenType_Identifier, "Expect parameter name.")
+			parameters = append(parameters, previous())
+		}
+	}
+	consume(tok.TokenType_RightParen, "Expect ')' after parameters.")
+	consume(tok.TokenType_LeftBrace, "Expect '{' before function body.")
+	body := block() // if we defined body as just BlockStmt, we would have to wrap it here
+	return &ast.FunctionStmt{Name: name, Params: parameters, Body: body}
 }
 func statement() ast.Statement {
 	if match(tok.TokenType_Print) {
@@ -144,7 +175,7 @@ func forStmt() ast.Expression { // desugaring
 		body = &ast.BlockStmt{Statements: []ast.Statement{body, &ast.ExpressionStmt{Expr: increment}}}
 	}
 	if condition == nil {
-		condition = &ast.Literal{Value: true}
+		condition = &ast.LiteralExpr{Value: true}
 	}
 	body = &ast.WhileStmt{Condition: condition, Body: body}
 	if initializer != nil {
@@ -160,9 +191,9 @@ func assignment() ast.Expression {
 	lExpr := logicalOr()
 	if match(tok.TokenType_Equal) {
 		equals := previous()
-		rExpr := assignment()                        // assignment is right associative
-		if lvalue, ok := lExpr.(*ast.Variable); ok { // turn expression into lvalue
-			return &ast.Assign{Name: lvalue.Name, Value: rExpr}
+		rExpr := assignment()                            // assignment is right associative
+		if lvalue, ok := lExpr.(*ast.VariableExpr); ok { // turn expression into lvalue
+			return &ast.AssignExpr{Name: lvalue.Name, Value: rExpr}
 		}
 		errors.ReportToken(equals, "Invalid assignment target.")
 	}
@@ -173,7 +204,7 @@ func logicalOr() ast.Expression {
 	for match(tok.TokenType_Or) {
 		operator := previous()
 		rExpr := logicalAnd()
-		lExpr = &ast.Logical{Left: lExpr, Operator: operator, Right: rExpr}
+		lExpr = &ast.LogicalExpr{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
@@ -182,7 +213,7 @@ func logicalAnd() ast.Expression {
 	for match(tok.TokenType_And) {
 		operator := previous()
 		rExpr := equality()
-		lExpr = &ast.Logical{Left: lExpr, Operator: operator, Right: rExpr}
+		lExpr = &ast.LogicalExpr{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
@@ -191,7 +222,7 @@ func equality() ast.Expression {
 	for match(tok.TokenType_BangEqual, tok.TokenType_EqualEqual) {
 		operator := previous()
 		rExpr := comparison()
-		lExpr = &ast.Binary{Left: lExpr, Operator: operator, Right: rExpr}
+		lExpr = &ast.BinaryExpr{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
@@ -204,7 +235,7 @@ func comparison() ast.Expression {
 
 		operator := previous()
 		rExpr := term()
-		lExpr = &ast.Binary{Left: lExpr, Operator: operator, Right: rExpr}
+		lExpr = &ast.BinaryExpr{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
@@ -213,7 +244,7 @@ func term() ast.Expression {
 	for match(tok.TokenType_Plus, tok.TokenType_Minus) {
 		operator := previous()
 		rExpr := factor()
-		lExpr = &ast.Binary{Left: lExpr, Operator: operator, Right: rExpr}
+		lExpr = &ast.BinaryExpr{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
@@ -222,7 +253,7 @@ func factor() ast.Expression {
 	for match(tok.TokenType_Slash, tok.TokenType_Star) {
 		operator := previous()
 		rExpr := unary()
-		lExpr = &ast.Binary{Left: lExpr, Operator: operator, Right: rExpr}
+		lExpr = &ast.BinaryExpr{Left: lExpr, Operator: operator, Right: rExpr}
 	}
 	return lExpr
 }
@@ -230,9 +261,30 @@ func unary() ast.Expression {
 	if match(tok.TokenType_Bang, tok.TokenType_Minus) {
 		operator := previous()
 		rExpr := unary()
-		return &ast.Unary{Operator: operator, Right: rExpr}
+		return &ast.UnaryExpr{Operator: operator, Right: rExpr}
 	}
-	return primary()
+	return call()
+}
+func call() ast.Expression {
+	lExpr := primary()
+	for match(tok.TokenType_LeftParen) {
+		// lExpr = ...
+		var arguments []ast.Expression
+		if !check(tok.TokenType_RightParen) {
+			arguments = []ast.Expression{expression()}
+			for match(tok.TokenType_Comma) {
+				if len(arguments) >= 255 {
+					errors.ReportToken(peek(), "Can't have more than 255 arguments.")
+				}
+				arguments = append(arguments, expression())
+			}
+		}
+		consume(tok.TokenType_RightParen, "Expect ')' after arguments.")
+		parenthesis := previous()
+		lExpr = &ast.CallExpr{Callee: lExpr, Parenthesis: parenthesis, Arguments: arguments}
+	}
+
+	return lExpr
 }
 func primary() ast.Expression {
 	literalTokenTypes := []tok.TokenType{
@@ -244,16 +296,16 @@ func primary() ast.Expression {
 	}
 	for _, tokenType := range literalTokenTypes {
 		if match(tokenType) {
-			return &ast.Literal{Value: previous().Literal}
+			return &ast.LiteralExpr{Value: previous().Literal}
 		}
 	}
 	if match(tok.TokenType_LeftParen) {
 		expr := expression()
 		consume(tok.TokenType_RightParen, "Expect ')' after expression.")
-		return &ast.Grouping{Expression: expr}
+		return &ast.GroupingExpr{Expression: expr}
 	}
 	if match(tok.TokenType_Identifier) {
-		return &ast.Variable{Name: previous()}
+		return &ast.VariableExpr{Name: previous()}
 	}
 	errors.ReportToken(peek(), "Expect expression.")
 	return nil

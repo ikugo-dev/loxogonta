@@ -18,38 +18,44 @@ type Expression interface {
 	foo()
 }
 
-type Literal struct {
+type LiteralExpr struct {
 	Value any
 }
-type Grouping struct {
+type GroupingExpr struct {
 	Expression Expression
 }
-type Unary struct {
+type UnaryExpr struct {
 	Operator tok.Token
 	Right    Expression
 }
-type Binary struct {
+type BinaryExpr struct {
 	Left     Expression
 	Operator tok.Token
 	Right    Expression
 }
-type Variable struct {
+type VariableExpr struct {
 	Name tok.Token
 }
-type Assign struct {
+type AssignExpr struct {
 	Name  tok.Token
 	Value Expression
 }
-type Logical struct {
+type LogicalExpr struct {
 	Left     Expression
 	Operator tok.Token
 	Right    Expression
 }
+type CallExpr struct {
+	Callee      Expression
+	Parenthesis tok.Token
+	Arguments   []Expression
+}
 
-func (e *Literal) foo()  {}
-func (e *Grouping) foo() {}
-func (e *Unary) foo()    {}
-func (e *Binary) foo()   {}
-func (e *Variable) foo() {}
-func (e *Assign) foo()   {}
-func (e *Logical) foo()  {}
+func (e *LiteralExpr) foo()  {}
+func (e *GroupingExpr) foo() {}
+func (e *UnaryExpr) foo()    {}
+func (e *BinaryExpr) foo()   {}
+func (e *VariableExpr) foo() {}
+func (e *AssignExpr) foo()   {}
+func (e *LogicalExpr) foo()  {}
+func (e *CallExpr) foo()     {}
