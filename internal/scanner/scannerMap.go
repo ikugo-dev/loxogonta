@@ -28,6 +28,8 @@ func scanToken() {
 		addToken(t.TokenType_Semicolon)
 	case '*':
 		addToken(t.TokenType_Star)
+	case '%':
+		addToken(t.TokenType_Percentage)
 	case '!':
 		matchAddToken('=', t.TokenType_BangEqual, t.TokenType_Bang)
 	case '=':

@@ -22,6 +22,7 @@ const (
 	TokenType_Semicolon
 	TokenType_Slash
 	TokenType_Star
+	TokenType_Percentage
 	TokenType_Bang // One or two character tokens.
 	TokenType_BangEqual
 	TokenType_Equal

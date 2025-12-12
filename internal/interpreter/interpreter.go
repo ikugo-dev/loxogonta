@@ -2,6 +2,7 @@ package intr
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/ikugo-dev/loxogonta/internal/ast"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
@@ -108,6 +109,12 @@ func evalExpr(expression ast.Expression) any {
 				return nil
 			}
 			return left.(float64) * right.(float64)
+		case tok.TokenType_Percentage:
+			if !areNumbers(left, right) {
+				errors.ReportRuntime(0, "%", "Operands must be numbers")
+				return nil
+			}
+			return math.Mod(left.(float64), right.(float64))
 		case tok.TokenType_Greater:
 			if !areNumbers(left, right) {
 				errors.ReportRuntime(0, ">", "Operands must be numbers")
@@ -165,9 +172,6 @@ func evalExpr(expression ast.Expression) any {
 		if len(arguments) != callable.arity() {
 			errors.ReportToken(expr.Parenthesis, fmt.Sprintf("Expected %d arguments, got %d.", callable.arity(), len(arguments)))
 		}
-		fmt.Printf("expr.Callee: %v\n", expr.Callee)
-		fmt.Printf("callee: %v\n", callee)
-		fmt.Printf("arguments: %v\n", arguments)
 		return callable.call(arguments)
 	default:
 		panic("Unexpected expression")

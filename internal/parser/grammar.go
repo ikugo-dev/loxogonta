@@ -241,7 +241,7 @@ func comparison() ast.Expression {
 }
 func term() ast.Expression {
 	lExpr := factor()
-	for match(tok.TokenType_Plus, tok.TokenType_Minus) {
+	for match(tok.TokenType_Plus, tok.TokenType_Minus, tok.TokenType_Percentage) {
 		operator := previous()
 		rExpr := factor()
 		lExpr = &ast.BinaryExpr{Left: lExpr, Operator: operator, Right: rExpr}
