@@ -20,6 +20,7 @@ import (
 // ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
 // whileStmt      → "while" "(" expression ")" statement ;
 // forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+// returnStmt     → "return" expression? ";" ;
 
 // expression     → assignment ;
 // assignment     → IDENTIFIER "=" assignment | logic_or ;
@@ -108,6 +109,9 @@ func statement() ast.Statement {
 	if match(tok.TokenType_For) {
 		return forStmt()
 	}
+	if match(tok.TokenType_Return) {
+		return returnStmt()
+	}
 	return expressionStmt()
 }
 func block() []ast.Statement {
@@ -139,14 +143,14 @@ func ifStmt() ast.Statement {
 	}
 	return &ast.IfStmt{Condition: condition, ThenBranch: thenBranch, ElseBranch: elseBranch}
 }
-func whileStmt() ast.Expression {
+func whileStmt() ast.Statement {
 	consume(tok.TokenType_LeftParen, "Expect '(' after 'while'.")
 	condition := expression()
 	consume(tok.TokenType_RightParen, "Expect ')' after while condition.")
 	body := statement()
 	return &ast.WhileStmt{Condition: condition, Body: body}
 }
-func forStmt() ast.Expression { // desugaring
+func forStmt() ast.Statement { // desugaring
 	consume(tok.TokenType_LeftParen, "Expect '(' after 'for'.")
 	var initializer ast.Statement
 	if match(tok.TokenType_Semicolon) {
@@ -183,6 +187,15 @@ func forStmt() ast.Expression { // desugaring
 	}
 
 	return body
+}
+func returnStmt() ast.Statement {
+	keyword := previous()
+	var value ast.Expression
+	if !check(tok.TokenType_Semicolon) {
+		value = expression()
+	}
+	consume(tok.TokenType_Semicolon, "Expect ';' after return value.")
+	return &ast.ReturnStmt{Keyword: keyword, Value: value}
 }
 func expression() ast.Expression {
 	return assignment()

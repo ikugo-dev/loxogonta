@@ -6,7 +6,7 @@ import (
 	"github.com/ikugo-dev/loxogonta/internal/ast"
 )
 
-func addNativeFunctions() {
+func addNativeFunctions(storage *environment) {
 	storage.put("clock", &nativeFunction{
 		fnArity: 0,
 		fn: func(args []any) any {
@@ -16,7 +16,7 @@ func addNativeFunctions() {
 }
 
 type loxCallable interface {
-	call(arguments []any) any
+	call(storage *environment, arguments []any) any
 	arity() int
 }
 
@@ -28,7 +28,7 @@ type nativeFunction struct {
 func (n *nativeFunction) arity() int {
 	return n.fnArity
 }
-func (n *nativeFunction) call(args []any) any {
+func (n *nativeFunction) call(_ *environment, args []any) any {
 	return n.fn(args)
 }
 
@@ -40,25 +40,18 @@ type loxFunction struct {
 func (f *loxFunction) arity() int {
 	return len(f.declaration.Params)
 }
-func (f *loxFunction) call(args []any) any {
-	// New environment whose parent is the closure
-	env := createEnvironmentWithParent(*f.closure)
-
-	// Bind params
+func (f *loxFunction) call(storage *environment, args []any) any {
+	oldStorage := storage
+	storage = createEnvironmentWithParent(f.closure)
 	for i, param := range f.declaration.Params {
-		env.put(param.Lexeme, args[i])
+		storage.put(param.Lexeme, args[i])
 	}
-
-	// Execute function body
-	old := storage
-	storage = env
 
 	var result any
 	for _, stmt := range f.declaration.Body {
-		result = evalStmt(stmt)
-		// Handle returns later
+		result = evalStmt(storage, stmt)
 	}
 
-	storage = old
+	storage = oldStorage
 	return result
 }

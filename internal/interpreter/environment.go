@@ -10,11 +10,11 @@ type environment struct {
 	parent *environment
 }
 
-func createEnvironment() environment {
-	return environment{values: make(map[string]any), parent: nil}
+func createEnvironment() *environment {
+	return &environment{values: make(map[string]any), parent: nil}
 }
-func createEnvironmentWithParent(e environment) environment {
-	return environment{values: make(map[string]any), parent: &e}
+func createEnvironmentWithParent(e *environment) *environment {
+	return &environment{values: make(map[string]any), parent: e}
 }
 
 func (e *environment) put(name string, value any) {

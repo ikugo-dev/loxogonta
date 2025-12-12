@@ -36,6 +36,10 @@ type FunctionStmt struct {
 	// so why isnt it define as `Body BlockStmt`? Because were already going to
 	// implement our own scope, so it would be redundant
 }
+type ReturnStmt struct {
+	Keyword tok.Token
+	Value   Expression
+}
 
 func (s *PrintStmt) foo()      {}
 func (s *ExpressionStmt) foo() {}
@@ -44,3 +48,4 @@ func (e *BlockStmt) foo()      {}
 func (e *IfStmt) foo()         {}
 func (e *WhileStmt) foo()      {}
 func (e *FunctionStmt) foo()   {}
+func (e *ReturnStmt) foo()     {}
