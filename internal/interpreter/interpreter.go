@@ -6,12 +6,19 @@ import (
 
 	"github.com/ikugo-dev/loxogonta/internal/ast"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
-	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
+var storage *environment
+
+func StartInterpreter() {
+	// storage = createEnvironmentWithResolution(statements)
+}
+
 func Interpret(statements []ast.Statement) any {
-	storage := createEnvironment()
+	storage = createEnvironment()
 	addNativeFunctions(storage)
+
 	var value any
 	for _, statement := range statements {
 		value = evalStmt(storage, statement)
@@ -150,10 +157,10 @@ func evalExpr(storage *environment, expression ast.Expression) (value any) {
 			return !isEqual(left, right)
 		}
 	case *ast.VariableExpr:
-		return storage.get(expr.Name)
+		return storage.lookUp(expr, expr.Name.Lexeme)
 	case *ast.AssignExpr:
 		value := evalExpr(storage, expr.Value)
-		storage.assign(expr.Name, value)
+		storage.assign(expr, value)
 		return value
 	case *ast.LogicalExpr:
 		leftValue := evalExpr(storage, expr.Left)

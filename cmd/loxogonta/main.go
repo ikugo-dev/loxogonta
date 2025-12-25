@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/ikugo-dev/loxogonta/internal/errors"
-	intr "github.com/ikugo-dev/loxogonta/internal/interpreter"
+	"github.com/ikugo-dev/loxogonta/internal/interpreter"
 	"github.com/ikugo-dev/loxogonta/internal/parser"
 	"github.com/ikugo-dev/loxogonta/internal/scanner"
 )
