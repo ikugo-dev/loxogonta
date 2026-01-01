@@ -15,17 +15,6 @@ func addNativeFunctions(storage *environment) {
 	})
 }
 
-func IsCallable(v any) bool {
-	switch v.(type) {
-	case *loxCallable:
-		return true
-	case *nativeFunction:
-		return true
-	default:
-		return false
-	}
-}
-
 type loxCallable interface {
 	call(storage *environment, arguments []any) any
 	arity() int

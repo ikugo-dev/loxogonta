@@ -1,7 +1,7 @@
 package ast
 
 import (
-	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
 // expression     → equality ;

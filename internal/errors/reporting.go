@@ -3,7 +3,7 @@ package errors
 import (
 	"fmt"
 
-	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
 var HadError = false

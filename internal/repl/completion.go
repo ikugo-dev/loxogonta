@@ -23,11 +23,8 @@ type completionSymbol struct {
 var completions = map[string]completionSymbol{}
 
 func init() {
-	keywords := []string{
-		"and", "class", "else", "false", "for",
-		"fun", "if", "nil", "or", "print",
-		"return", "super", "this", "true", "var", "while",
-	}
+	keywords := []string{"and", "class", "else", "false", "for", "fun", "if",
+		"nil", "or", "print", "return", "super", "this", "true", "var", "while"}
 
 	for _, kw := range keywords {
 		completions[kw] = completionSymbol{

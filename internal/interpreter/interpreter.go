@@ -89,6 +89,10 @@ func evalStmt(storage *environment, statement ast.Statement) (value any) {
 			value = evalExpr(storage, stmt.Value)
 		}
 		panic(Return{value})
+	case *ast.ClassStmt:
+		storage.put(stmt.Name.Lexeme, nil)
+		class := createLoxClass(stmt.Name.Lexeme)
+		storage.assign(stmt.Name, class)
 	}
 	return nil
 }
