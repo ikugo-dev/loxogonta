@@ -2,8 +2,7 @@ package repl
 
 import (
 	"sort"
-
-	"github.com/c-bata/go-prompt"
+	"strings"
 )
 
 type CompletionType int
@@ -15,9 +14,8 @@ const (
 )
 
 type completionSymbol struct {
-	Name  string
-	Kind  CompletionType
-	Value string
+	Name string
+	Kind CompletionType
 }
 
 var completions = map[string]completionSymbol{}
@@ -36,39 +34,30 @@ func init() {
 
 func AddCompletion(name string, kind CompletionType, value string) {
 	completions[name] = completionSymbol{
-		Name:  name,
-		Kind:  kind,
-		Value: value,
+		Name: name,
+		Kind: kind,
 	}
 }
 
-func GetCompleter(d prompt.Document) []prompt.Suggest {
-	word := d.GetWordBeforeCursor()
-	suggestions := []prompt.Suggest{}
+func Completer(input string) (c []string) {
+	var suggestions []string
 
-	for _, sym := range sortCompletionSymbols() {
-		switch sym.Kind {
+	for _, symbol := range sortCompletionSymbols() {
+		if !strings.HasPrefix(symbol.Name, input) {
+			continue
+		}
+		switch symbol.Kind {
 		case CompletionType_Function:
-			suggestions = append(suggestions, prompt.Suggest{
-				Text:        sym.Name + "()",
-				Description: "function: " + sym.Value,
-			})
+			suggestions = append(suggestions, symbol.Name+"()")
 
 		case CompletionType_Variable:
-			suggestions = append(suggestions, prompt.Suggest{
-				Text:        sym.Name + ";",
-				Description: "variable: " + sym.Value,
-			})
+			suggestions = append(suggestions, symbol.Name+";")
 
 		case CompletionType_Keyword:
-			suggestions = append(suggestions, prompt.Suggest{
-				Text:        sym.Name + " ",
-				Description: "keyword",
-			})
+			suggestions = append(suggestions, symbol.Name+" ")
 		}
 	}
-
-	return prompt.FilterHasPrefix(suggestions, word, true)
+	return suggestions
 }
 
 func sortCompletionSymbols() []completionSymbol {

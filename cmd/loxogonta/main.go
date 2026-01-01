@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/c-bata/go-prompt"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
 	"github.com/ikugo-dev/loxogonta/internal/interpreter"
 	"github.com/ikugo-dev/loxogonta/internal/parser"
 	"github.com/ikugo-dev/loxogonta/internal/repl"
 	"github.com/ikugo-dev/loxogonta/internal/scanner"
+	"github.com/peterh/liner"
 )
 
 func main() {
@@ -49,17 +49,24 @@ func run(source string) any {
 }
 
 func runPrompt() {
-	p := prompt.New(
-		func(line string) {
-			if lastExpr := run(line); lastExpr != nil {
+	line := liner.NewLiner()
+	defer line.Close()
+
+	line.SetCtrlCAborts(true)
+	line.SetCompleter(repl.Completer)
+
+	for true {
+		if input, err := line.Prompt("> "); err == nil {
+			line.AppendHistory(input)
+			if lastExpr := run(input); lastExpr != nil {
 				fmt.Println("--> ", lastExpr)
 			}
 			errors.HadError = false
-		},
-		repl.GetCompleter,
-		prompt.OptionPrefix("> "),
-		prompt.OptionHistory([]string{}),
-	)
-
-	p.Run()
+		} else if err == liner.ErrPromptAborted {
+			fmt.Print("Aborted")
+			break
+		} else {
+			fmt.Print("Error reading line: ", err)
+		}
+	}
 }
