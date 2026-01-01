@@ -67,6 +67,10 @@ func resolveStmt(statement ast.Statement) {
 		if stmt.Value != nil {
 			resolveExpr(stmt.Value)
 		}
+	case *ast.ClassStmt:
+		declare(stmt.Name) //XXX do we really need them back to back? not really... right?
+		define(stmt.Name)
+		// method resolution
 	default:
 	}
 }

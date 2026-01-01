@@ -3,11 +3,12 @@ package prs
 import (
 	"github.com/ikugo-dev/loxogonta/internal/ast"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
-	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
 // program        → declaration* EOF ;
-// declaration    → varDecl | funDecl | statement ;
+// declaration    → classDecl | varDecl | funDecl | statement ;
+// classDecl      → "class" IDENTIFIER "{" function* "}" ;
 // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 // funDecl        → "fun" function ;
 // function       → IDENTIFIER "(" parameters? ")" block ;
@@ -54,11 +55,34 @@ func declaration() ast.Statement {
 	if match(tok.TokenType_Var) {
 		return varDecl()
 	}
-	if match(tok.TokenType_Fun) {
-		return funDecl()
+	if match(tok.TokenType_Fun) { // funDecl
+		return function("function")
+	}
+	if match(tok.TokenType_Class) {
+		return classDecl()
 	}
 	return statement()
 }
+func classDecl() ast.Statement {
+	// classDecl      → "class" IDENTIFIER "{" function* "}" ;
+	consume(tok.TokenType_Identifier, "Expect class name.")
+	name := previous()
+	consume(tok.TokenType_LeftBrace, "Expect '{' before class body.")
+
+	var methods []ast.FunctionStmt
+	for !check(tok.TokenType_RightBrace) && !isAtEnd() {
+		function, ok := function("method").(*ast.FunctionStmt)
+		if !ok {
+			errors.ReportToken(peek(), "Error while parsing class methods")
+		}
+		methods = append(methods, *function)
+	}
+	consume(tok.TokenType_RightBrace, "Expect '}' before class body.")
+
+	// methods.add(function("method"));
+	return &ast.ClassStmt{Name: name, Methods: methods}
+}
+
 func varDecl() ast.Statement {
 	consume(tok.TokenType_Identifier, "Expect variable name.")
 	name := previous()
@@ -69,12 +93,11 @@ func varDecl() ast.Statement {
 	consume(tok.TokenType_Semicolon, "Expect ';' after variable declaration.")
 	return &ast.VarStmt{Name: name, Initializer: initializer}
 }
-func funDecl() ast.Statement { // we implemented just this function
-	// "function" and "parameters" are in the grammar for readability
-	consume(tok.TokenType_Identifier, "Expect function name.")
+func function(kind string) ast.Statement {
+	consume(tok.TokenType_Identifier, "Expect "+kind+" name.")
 	name := previous()
 
-	consume(tok.TokenType_LeftParen, "Expect '(' after function name.")
+	consume(tok.TokenType_LeftParen, "Expect '(' after "+kind+" name.")
 
 	var parameters []tok.Token
 	if !check(tok.TokenType_RightParen) {
@@ -89,7 +112,7 @@ func funDecl() ast.Statement { // we implemented just this function
 		}
 	}
 	consume(tok.TokenType_RightParen, "Expect ')' after parameters.")
-	consume(tok.TokenType_LeftBrace, "Expect '{' before function body.")
+	consume(tok.TokenType_LeftBrace, "Expect '{' before "+kind+" body.")
 	body := block() // if we defined body as just BlockStmt, we would have to wrap it here
 	return &ast.FunctionStmt{Name: name, Params: parameters, Body: body}
 }

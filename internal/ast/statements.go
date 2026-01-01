@@ -1,6 +1,6 @@
 package ast
 
-import tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+import "github.com/ikugo-dev/loxogonta/internal/tokens"
 
 type Statement interface {
 	foo()
@@ -40,6 +40,10 @@ type ReturnStmt struct {
 	Keyword tok.Token
 	Value   Expression
 }
+type ClassStmt struct {
+	Name    tok.Token
+	Methods []FunctionStmt
+}
 
 func (s *PrintStmt) foo()      {}
 func (s *ExpressionStmt) foo() {}
@@ -49,3 +53,4 @@ func (e *IfStmt) foo()         {}
 func (e *WhileStmt) foo()      {}
 func (e *FunctionStmt) foo()   {}
 func (e *ReturnStmt) foo()     {}
+func (e *ClassStmt) foo()      {}
