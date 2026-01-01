@@ -58,7 +58,7 @@ func runPrompt() {
 		},
 		repl.GetCompleter,
 		prompt.OptionPrefix("> "),
-		prompt.OptionHistory([]string{}), // enables history
+		prompt.OptionHistory([]string{}),
 	)
 
 	p.Run()

@@ -23,6 +23,9 @@ func startInterpreter(statements []ast.Statement) {
 		addNativeFunctions(globals)
 	}
 	newLocals := rslv.Resolve(statements)
+	if errors.HadParseError { // TODO: change to resolver errors
+		return
+	}
 
 	if locals == nil {
 		locals = make(map[ast.Expression]int)

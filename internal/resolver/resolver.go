@@ -8,8 +8,17 @@ import (
 	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
+type FunctionType int
+
+const (
+	FunctionType_None FunctionType = iota
+	FunctionType_Function
+	// FunctionType_Method
+)
+
 var scopes []map[string]bool
 var locals map[ast.Expression]int
+var currentFunctionType FunctionType = FunctionType_None
 
 func Resolve(statements []ast.Statement) map[ast.Expression]int {
 	scopes = nil
@@ -50,8 +59,11 @@ func resolveStmt(statement ast.Statement) {
 	case *ast.FunctionStmt:
 		declare(stmt.Name) //XXX do we really need them back to back? not really... right?
 		define(stmt.Name)
-		resolveFunction(*stmt)
+		resolveFunction(*stmt, FunctionType_Function)
 	case *ast.ReturnStmt:
+		if currentFunctionType == FunctionType_None {
+			errors.ReportToken(stmt.Keyword, "Can't return from top-level code.")
+		}
 		if stmt.Value != nil {
 			resolveExpr(stmt.Value)
 		}
@@ -101,7 +113,10 @@ func resolveLocal(expr ast.Expression, name string) {
 	}
 }
 
-func resolveFunction(function ast.FunctionStmt) { // TODO: maybe change to pointer?
+func resolveFunction(function ast.FunctionStmt, functionType FunctionType) {
+	// TODO: maybe change to function pointer?
+	enclosingFunctionType := currentFunctionType
+	currentFunctionType = functionType
 	beginScope()
 	for _, token := range function.Params {
 		declare(token) //XXX do we really need them back to back? not really... right?
@@ -111,6 +126,7 @@ func resolveFunction(function ast.FunctionStmt) { // TODO: maybe change to point
 		resolveStmt(statement)
 	}
 	endScope()
+	currentFunctionType = enclosingFunctionType
 }
 
 func beginScope() {
@@ -124,7 +140,11 @@ func declare(token tok.Token) {
 	if len(scopes) == 0 {
 		return
 	}
-	scopes[len(scopes)-1][token.Lexeme] = false // different than default (nil)
+	scope := scopes[len(scopes)-1]
+	if _, exists := scope[token.Lexeme]; exists {
+		errors.ReportToken(token, "Already variable with this name in this scope.")
+	}
+	scope[token.Lexeme] = false // different than default (nil)
 }
 
 func define(token tok.Token) {
