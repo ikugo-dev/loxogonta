@@ -1,28 +1,9 @@
 package intr
 
 import (
-	"fmt"
-
 	"github.com/ikugo-dev/loxogonta/internal/ast"
-	// "github.com/ikugo-dev/loxogonta/internal/errors"
-	// "github.com/ikugo-dev/loxogonta/internal/resolver"
 	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
-
-// func assign(expr ast.Expression, value any) {
-// 	assignExpr, ok := expr.(*ast.AssignExpr)
-// 	if !ok {
-// 		errors.ReportRuntime(-1, "During assign expression",
-// 			"Could not validate expression as an assignment expression")
-// 		return
-// 	}
-// 	distance, exists := locals[expr]
-// 	if exists {
-// 		assignAt(assignExpr.Name.Lexeme, distance, value)
-// 		return
-// 	}
-// 	env.assign(assignExpr.Name, value)
-// }
 
 func lookUpVariable(storage *environment, expr ast.Expression, name tok.Token) any {
 	distance, exists := locals[expr]

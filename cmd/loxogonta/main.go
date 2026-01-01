@@ -1,19 +1,20 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 
+	"github.com/c-bata/go-prompt"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
 	"github.com/ikugo-dev/loxogonta/internal/interpreter"
 	"github.com/ikugo-dev/loxogonta/internal/parser"
+	"github.com/ikugo-dev/loxogonta/internal/repl"
 	"github.com/ikugo-dev/loxogonta/internal/scanner"
 )
 
 func main() {
 	if len(os.Args) > 2 {
-		fmt.Println("Usage: jlox [script]")
+		fmt.Println("Usage: ./main [script]")
 		os.Exit(64)
 	} else if len(os.Args) == 2 {
 		runFile(os.Args[1])
@@ -38,22 +39,6 @@ func runFile(filePath string) {
 	}
 }
 
-func runPrompt() {
-	in := bufio.NewReader(os.Stdin)
-	for true {
-		fmt.Print("> ")
-		var line string
-		line, err := in.ReadString('\n')
-		if err != nil {
-			break
-		}
-		if lastExpr := run(line); lastExpr != nil {
-			fmt.Println("--> ", lastExpr)
-		}
-		errors.HadError = false
-	}
-}
-
 func run(source string) any {
 	tokens := scn.ScanSource(source)
 	statements := prs.ParseTokens(tokens)
@@ -61,4 +46,20 @@ func run(source string) any {
 		return nil
 	}
 	return intr.Interpret(statements)
+}
+
+func runPrompt() {
+	p := prompt.New(
+		func(line string) {
+			if lastExpr := run(line); lastExpr != nil {
+				fmt.Println("--> ", lastExpr)
+			}
+			errors.HadError = false
+		},
+		repl.GetCompleter,
+		prompt.OptionPrefix("> "),
+		prompt.OptionHistory([]string{}), // enables history
+	)
+
+	p.Run()
 }

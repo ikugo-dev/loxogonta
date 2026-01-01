@@ -7,18 +7,19 @@ import (
 
 	"github.com/ikugo-dev/loxogonta/internal/ast"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
+	"github.com/ikugo-dev/loxogonta/internal/repl"
 	"github.com/ikugo-dev/loxogonta/internal/resolver"
 	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
 var globals *environment
-var env *environment
+var storage *environment
 var locals map[ast.Expression]int
 
 func startInterpreter(statements []ast.Statement) {
 	if globals == nil || locals == nil {
 		globals = createEnvironment()
-		env = globals
+		storage = globals
 		addNativeFunctions(globals)
 	}
 	newLocals := rslv.Resolve(statements)
@@ -34,7 +35,7 @@ func Interpret(statements []ast.Statement) any {
 
 	var value any
 	for _, statement := range statements {
-		value = evalStmt(env, statement)
+		value = evalStmt(storage, statement)
 	}
 	return value
 }
@@ -51,6 +52,7 @@ func evalStmt(storage *environment, statement ast.Statement) (value any) {
 			value = evalExpr(storage, stmt.Initializer)
 		}
 		storage.put(stmt.Name.Lexeme, value)
+		repl.AddCompletion(stmt.Name.Lexeme, repl.CompletionType_Variable, fmt.Sprintf("%v", value))
 	case *ast.BlockStmt:
 		var value any = nil
 		oldStorage := storage
@@ -73,6 +75,11 @@ func evalStmt(storage *environment, statement ast.Statement) (value any) {
 	case *ast.FunctionStmt:
 		function := &loxFunction{declaration: stmt, closure: storage}
 		storage.put(stmt.Name.Lexeme, function)
+		var paramList []string
+		for _, param := range function.declaration.Params {
+			paramList = append(paramList, param.Lexeme)
+		}
+		repl.AddCompletion(stmt.Name.Lexeme, repl.CompletionType_Function, fmt.Sprintf("%v", paramList))
 	case *ast.ReturnStmt:
 		var value any
 		if stmt.Value != nil {
