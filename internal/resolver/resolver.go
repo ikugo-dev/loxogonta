@@ -5,13 +5,14 @@ import (
 
 	"github.com/ikugo-dev/loxogonta/internal/ast"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
-	tok "github.com/ikugo-dev/loxogonta/internal/tokens"
+	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
 var scopes []map[string]bool
 var locals map[ast.Expression]int
 
 func Resolve(statements []ast.Statement) map[ast.Expression]int {
+	scopes = nil
 	locals = make(map[ast.Expression]int)
 	for _, statement := range statements {
 		resolveStmt(statement)
@@ -69,12 +70,14 @@ func resolveExpr(expression ast.Expression) {
 		resolveExpr(expr.Left)
 		resolveExpr(expr.Right)
 	case *ast.VariableExpr:
-		if len(scopes) != 0 && scopes[len(scopes)-1][expr.Name.Lexeme] == false {
-			errors.ReportToken(expr.Name, "Can't read local variable in its own initializer.")
+		if len(scopes) != 0 {
+			if defined, ok := scopes[len(scopes)-1][expr.Name.Lexeme]; ok && !defined {
+				errors.ReportToken(expr.Name, "Can't read local variable in its own initializer.")
+			}
 		}
 		resolveLocal(expr, expr.Name.Lexeme)
 	case *ast.AssignExpr:
-		resolveExpr(expr)
+		resolveExpr(expr.Value)
 		resolveLocal(expr, expr.Name.Lexeme)
 	case *ast.LogicalExpr:
 		resolveExpr(expr.Left)
@@ -92,7 +95,7 @@ func resolveLocal(expr ast.Expression, name string) {
 	for i, scope := range slices.Backward(scopes) {
 		if _, ok := scope[name]; ok {
 			// interpreter.resolve(expr, scopes.size() - 1 - i);
-			locals[expr] = len(scope) - 1 - i
+			locals[expr] = len(scopes) - 1 - i
 			return
 		}
 	}

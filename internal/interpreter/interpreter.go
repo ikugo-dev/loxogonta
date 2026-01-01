@@ -2,26 +2,39 @@ package intr
 
 import (
 	"fmt"
+	"maps"
 	"math"
 
 	"github.com/ikugo-dev/loxogonta/internal/ast"
 	"github.com/ikugo-dev/loxogonta/internal/errors"
+	"github.com/ikugo-dev/loxogonta/internal/resolver"
 	"github.com/ikugo-dev/loxogonta/internal/tokens"
 )
 
-var storage *environment
+var globals *environment
+var env *environment
+var locals map[ast.Expression]int
 
-func StartInterpreter() {
-	// storage = createEnvironmentWithResolution(statements)
+func startInterpreter(statements []ast.Statement) {
+	if globals == nil || locals == nil {
+		globals = createEnvironment()
+		env = globals
+		addNativeFunctions(globals)
+	}
+	newLocals := rslv.Resolve(statements)
+
+	if locals == nil {
+		locals = make(map[ast.Expression]int)
+	}
+	maps.Copy(locals, newLocals)
 }
 
 func Interpret(statements []ast.Statement) any {
-	storage = createEnvironment()
-	addNativeFunctions(storage)
+	startInterpreter(statements)
 
 	var value any
 	for _, statement := range statements {
-		value = evalStmt(storage, statement)
+		value = evalStmt(env, statement)
 	}
 	return value
 }
@@ -157,10 +170,18 @@ func evalExpr(storage *environment, expression ast.Expression) (value any) {
 			return !isEqual(left, right)
 		}
 	case *ast.VariableExpr:
-		return storage.lookUp(expr, expr.Name.Lexeme)
+		// return storage.get(expr.Name)
+		return lookUpVariable(storage, expr, expr.Name)
 	case *ast.AssignExpr:
 		value := evalExpr(storage, expr.Value)
-		storage.assign(expr, value)
+
+		// storage.assign(expr.Name, value)
+		distance, exists := locals[expr]
+		if exists {
+			assignAt(storage, expr.Name, value, distance)
+		} else {
+			globals.assign(expr.Name, value)
+		}
 		return value
 	case *ast.LogicalExpr:
 		leftValue := evalExpr(storage, expr.Left)
